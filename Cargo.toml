@@ -51,7 +51,7 @@ eframe = { version = "0.37", default-features = false }
 # `wayland` feature links the system libwayland through pkg-config only to parent the dialog to
 # the window; without it builds need no Wayland development files.
 egui_kittest = "0.37"
-rfd = { version = "0.17", default-features = false, features = ["xdg-portal"] }
+rfd = { version = "0.18", default-features = false, features = ["xdg-portal"] }
 image = { version = "0.25", default-features = false, features = ["png"] }
 
 [workspace.lints.rust]
