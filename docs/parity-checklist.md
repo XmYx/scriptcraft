@@ -25,8 +25,8 @@ behaviour. `cargo xtask parity` scores this table.
 | Formatting | Custom margins and element styles | P2 | missing | 15 |  |
 | Formatting | Forced page breaks | P2 | done | - | |
 | Files | Fountain open and save | P0 | done | - | lossless |
-| Files | FDX open | P0 | partial | 3 | elements, numbers, dual dialogue, title page, page breaks; no styles or notes |
-| Files | FDX save | P0 | partial | 3 | everything FDX open reads; outline and notes left out (reported) |
+| Files | FDX open | P0 | partial | 4 | elements, numbers, dual dialogue, title page, page breaks; no styles or notes |
+| Files | FDX save | P0 | partial | 4 | everything FDX open reads; outline and notes left out (reported) |
 | Files | PDF export with exact pagination | P0 | done | - | craft-pdf, font embedded; the layout's pages |
 | Files | Plain text export | P2 | done | - | |
 | Files | Import from word-processor files and PDF | P2 | missing | 16 |  |
@@ -35,9 +35,9 @@ behaviour. `cargo xtask parity` scores this table.
 | Writing | Undo and redo | P0 | done | - | |
 | Writing | Find and replace | P0 | done | - | Ctrl+F, Ctrl+H, F3 |
 | Writing | Spell-check | P0 | done | - | craft-proof: English always, other languages with their dictionary; F7, add word |
-| Writing | Notes and comments | P1 | partial | 5 | Fountain notes shown; no anchored comments |
-| Writing | Selection and copy/paste across elements | P1 | missing | 1 |  |
-| Writing | Bold, italic and underline shown as styles | P2 | partial | 4 | markup kept as text |
+| Writing | Notes and comments | P1 | partial | 1 | Fountain notes shown; no anchored comments |
+| Writing | Selection and copy/paste across elements | P1 | partial | 3 | whole elements (Shift+↑/↓ at an edge), copied as Fountain; multi-paragraph paste becomes elements; no selection that starts or ends mid-element |
+| Writing | Bold, italic and underline shown as styles | P2 | partial | 5 | markup kept as text |
 | Writing | Rename a character everywhere | P2 | partial | 12 | Find and Replace with Match case |
 | Structure | Scene navigator | P0 | done | - | |
 | Structure | Index cards for scenes | P1 | done | - | View ▸ Index Cards: synopsis on the card, keyboard reordering |

@@ -11,6 +11,8 @@ fn harness(startup: Startup) -> Harness<'static, ScriptApp> {
     Harness::builder()
         .with_size(egui::vec2(1400.0, 900.0))
         .with_accessibility_check(true)
+        // Jumps in the virtualized editor settle over a few frames as measured heights replace estimates.
+        .with_max_steps(16)
         .with_context_setup(|ctx| {
             scriptcraft_ui_egui::install_fonts(ctx);
         })
@@ -216,4 +218,46 @@ fn spelling_next_misspelling_suggests_and_add_word_accepts() {
     chord(&mut h, Modifiers::NONE, Key::F7);
     h.run();
     assert_eq!(h.state().status(), "No misspelled words");
+}
+
+#[test]
+fn whole_elements_select_copy_cut_and_paste_as_fountain() {
+    // Element 10 is "Maya grabs the handset."; the caret starts at its end.
+    let mut h = harness(Startup { sample: true, focus_element: Some(10), ..Startup::default() });
+    h.run();
+    chord(&mut h, Modifiers::SHIFT, Key::ArrowDown);
+    chord(&mut h, Modifiers::SHIFT, Key::ArrowDown);
+    assert_eq!(h.state().status(), "3 elements selected");
+    h.event(egui::Event::Copy);
+    // The copy command is in the output of the frame that handled the key.
+    h.step();
+    let copied: Vec<String> = h
+        .output()
+        .platform_output
+        .commands
+        .iter()
+        .filter_map(|c| match c {
+            egui::OutputCommand::CopyText(t) => Some(t.clone()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(copied.last().map(String::as_str), Some("Maya grabs the handset.\n\nMAYA\nI read you, Tomas. You're three hours late.\n"));
+    h.run();
+    assert_eq!(h.state().status(), "Copied 3 elements");
+    let before = h.state().document().screenplay().elements.len();
+    h.event(egui::Event::Cut);
+    h.run();
+    assert_eq!(h.state().document().screenplay().elements.len(), before - 3);
+    assert_eq!(h.state().status(), "Removed 3 elements");
+    // Pasting screenplay text from anywhere becomes elements with their types.
+    h.event(egui::Event::Paste("EXT. JETTY - DAWN\n\nGulls.\n\nARI\nMorning!\n".into()));
+    h.run();
+    let sp = h.state().document().screenplay();
+    assert_eq!(h.state().status(), "Pasted 4 elements");
+    let kinds: Vec<ElementKind> = sp.elements.iter().map(|e| e.kind).collect();
+    let at = sp.elements.iter().position(|e| e.text == "EXT. JETTY - DAWN").expect("pasted heading");
+    assert_eq!(kinds[at..at + 4], [ElementKind::SceneHeading, ElementKind::Action, ElementKind::Character, ElementKind::Dialogue]);
+    // Undo takes the paste back out.
+    chord(&mut h, Modifiers::COMMAND, Key::Z);
+    assert!(h.state().document().screenplay().elements.iter().all(|e| e.text != "EXT. JETTY - DAWN"));
 }

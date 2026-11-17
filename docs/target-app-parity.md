@@ -16,7 +16,8 @@ weight 3; P1 = missed within a project, weight 2; P2 = nice to have, weight 1; d
 | Measured | Weighted | P0 | P1 | P2 |
 |---|---:|---:|---:|---:|
 | 2026-11-17, skeleton (`b1cf89b`) | 48% | 64% | 32% | 26% |
-| 2026-11-17, polish pass | **81%** | **92%** | **82%** | **47%** |
+| 2026-11-17, polish pass | 81% | 92% | 82% | 47% |
+| 2026-11-17, user-research pass | **82%** | **92%** | **85%** | **47%** |
 
 ## Where ScriptCraft stands against each reference
 
@@ -38,5 +39,8 @@ weight 3; P1 = missed within a project, weight 2; P2 = nice to have, weight 1; d
 | Platforms | Desktop, web or mobile depending on the app | Desktop (Linux, macOS, Windows); **no web or mobile build yet** |
 | Accessibility | Varies; rarely documented | AccessKit names, live regions, 16 kittest keyboard tests with the accessibility check |
 | Languages | Several interface languages | craft-i18n wired; **no ScriptCraft catalogs yet** |
+
+What users complain about and ask for in these apps, and where ScriptCraft stands on each, is
+[user-research.md](user-research.md).
 
 The ranked remaining work is [gaps.md](gaps.md); the current focus is [roadmap.md](roadmap.md).

@@ -11,6 +11,8 @@ fn harness(startup: Startup) -> Harness<'static, ScriptApp> {
     Harness::builder()
         .with_size(egui::vec2(1280.0, 860.0))
         .with_accessibility_check(true)
+        // Jumps in the virtualized editor settle over a few frames as measured heights replace estimates.
+        .with_max_steps(16)
         .with_context_setup(|ctx| {
             scriptcraft_ui_egui::install_fonts(ctx);
         })

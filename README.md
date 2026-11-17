@@ -36,8 +36,10 @@
 
 ## What works today
 
-Measured against the industry's screenwriting apps: **81% weighted parity**
-([details](docs/target-app-parity.md)).
+Measured against the industry's screenwriting apps: **82% weighted parity**
+([details](docs/target-app-parity.md)). Built to avoid what their users complain about most:
+no activation or account, no cloud lock-in, plain local files with autosave and backups, and
+no crashes on bad files ([user research](docs/user-research.md)).
 
 - **Screenplay elements:** scene heading, action, character, parenthetical, dialogue, transition,
   shot, centered text, lyrics, plus outline sections, synopses, notes and omitted text that are
@@ -46,6 +48,9 @@ Measured against the industry's screenwriting apps: **81% weighted parity**
   action, transition → scene heading…); Tab and Shift+Tab change the element; Backspace at the
   start of an element joins it to the one above. Headings, cues and transitions are capitalised as
   you type. [All keys](docs/keyboard.md).
+- **Fast on feature-length scripts:** only the lines near the window are live text fields.
+- **Clipboard:** Shift+↑/↓ at a line's edge selects whole elements; cut and copy them as Fountain;
+  paste screenplay text from anywhere and it becomes typed elements.
 - **Auto-complete** of character names, scene heading prefixes, places and times of day, and
   transitions. **Find and replace** (Ctrl+F, Ctrl+H, F3). **Spell-check** as you type, with F7 for
   the next misspelling and suggestions (craft-libs craft-proof).
@@ -67,8 +72,8 @@ Measured against the industry's screenwriting apps: **81% weighted parity**
   are announced, the page preview publishes its text; keyboard flows are tested with
   egui_kittest's accessibility check. Interface text goes through craft-i18n.
 
-Not yet: selection and copy/paste across elements, styled text, anchored comments, locked pages,
-translated catalogs. See the [roadmap](ROADMAP.md).
+Not yet: anchored comments, selection from mid-element, styled text, locked pages, translated
+catalogs. See the [roadmap](ROADMAP.md).
 
 <p align="center">
   <img alt="Index cards: one card per scene with number, heading, synopsis, opening action, length and cast" src="docs/images/index-cards.png" width="900">

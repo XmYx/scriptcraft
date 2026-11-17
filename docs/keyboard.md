@@ -9,6 +9,9 @@ On macOS use Cmd for Ctrl. The rules for Enter and Tab are ScriptCraft's own (`c
 | Tab | Change the element: action → character → transition → scene heading → shot → action; dialogue ⇄ parenthetical (a new parenthetical gets its parentheses) |
 | Shift+Tab | The same, backwards |
 | Backspace at the start | Join the element to the one above (an empty element is taken out) |
+| Shift+↑ at the start / Shift+↓ at the end | Select whole elements; more Shift+↑/↓ extends the selection |
+| Ctrl+C, Ctrl+X, Delete with elements selected | Copy them (as Fountain), cut them, take them out; Esc or any other key ends the selection |
+| Ctrl+V | A multi-paragraph paste becomes elements (Fountain or plain screenplay text); a single line pastes as text |
 | ↑ at the start / ↓ at the end | Move to the element above / below |
 | ↑ ↓, Enter or Tab, Esc in a suggestion list | Choose, accept (a character name then goes on to dialogue), hide |
 | Ctrl+1 … Ctrl+7 | Scene heading, action, character, parenthetical, dialogue, transition, shot |

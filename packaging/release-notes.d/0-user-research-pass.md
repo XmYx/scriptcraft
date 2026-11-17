@@ -1,0 +1,1 @@
+- Long scripts stay fast while typing. Select whole lines with Shift+↑/↓ and cut or copy them; paste screenplay text from other apps and it keeps its scene headings, characters and dialogue.

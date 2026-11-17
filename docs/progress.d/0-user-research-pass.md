@@ -1,0 +1,1 @@
+- 2026-11-17 · minor · User-research pass (docs/user-research.md): the editor draws only nearby lines (a 1,050-element script from 53 ms to about 1.3 ms a frame); whole elements selected with Shift+↑/↓, cut and copied as Fountain; multi-paragraph paste becomes typed elements; parity 82%.

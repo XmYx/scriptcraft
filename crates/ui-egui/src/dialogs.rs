@@ -124,12 +124,14 @@ impl TitlePageDialog {
     }
 }
 
-const KEYS: [(&str, &str); 21] = [
+const KEYS: [(&str, &str); 23] = [
     ("Enter", "End the element and start the next one (character → dialogue, dialogue → action…)"),
     ("Shift+Enter", "New line inside the element"),
     ("Tab", "Change the element: action → character → transition → scene heading → shot; dialogue ⇄ parenthetical"),
     ("Shift+Tab", "Change the element the other way"),
     ("Backspace at the start", "Join with the element above"),
+    ("Shift+↑ / Shift+↓ at an edge", "Select whole elements (Ctrl+C, Ctrl+X, Delete act on them)"),
+    ("Ctrl+V", "Paste screenplay text; several paragraphs become elements"),
     ("↑ / ↓ at the start / end", "Move to the element above / below"),
     ("Enter or Tab in a suggestion list", "Accept the suggestion (Esc hides the list)"),
     ("Ctrl+1 … Ctrl+7", "Scene heading, action, character, parenthetical, dialogue, transition, shot"),

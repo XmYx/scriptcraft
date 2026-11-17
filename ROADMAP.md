@@ -11,15 +11,17 @@ the current focus in [docs/roadmap.md](docs/roadmap.md).
 
 ## Where it stands
 
-**Parity: 81% weighted** (P0 92%, P1 82%, P2 47%; it was 48% at the skeleton), measured against
+**Parity: 82% weighted** (P0 92%, P1 85%, P2 47%; it was 48% at the skeleton), measured against
 the industry's screenwriting apps in [docs/target-app-parity.md](docs/target-app-parity.md).
+What their users complain about and ask for: [docs/user-research.md](docs/user-research.md).
 
 | Area | State |
 |---|---|
 | Model, Fountain (lossless), pagination (US Letter, A4, MORE/CONT'D, automatic CONT'D, dual dialogue) | done, tested |
 | PDF export (exact pages, font embedded) | done, tested |
 | FDX | open and save elements, scene numbers, dual dialogue, title page; no styled text or notes yet |
-| Editor: Enter/Tab flow, auto-complete, find and replace, spell-check, navigator, index cards, page preview | done; no selection across elements yet |
+| Editor: Enter/Tab flow, auto-complete, find and replace, spell-check, navigator, index cards, page preview | done; fast on feature-length scripts (only nearby lines are drawn) |
+| Clipboard: whole elements cut and copied as Fountain, multi-paragraph paste becomes elements | done; no selection from mid-element yet |
 | Production: locked scene numbers with A/B, revision marks and colours | done; no locked pages |
 | Reports and statistics | done |
 | Safety: autosave with recovery, backups, atomic saves | done |
@@ -31,8 +33,8 @@ the industry's screenwriting apps in [docs/target-app-parity.md](docs/target-app
 
 ## Next
 
-The ranked list is [docs/gaps.md](docs/gaps.md); first: selection and copy/paste across elements,
-title page layout, FDX fidelity, styled text. Detail: [docs/roadmap.md](docs/roadmap.md).
+The ranked list is [docs/gaps.md](docs/gaps.md); first: anchored notes and comments, title page
+layout, mid-element selection, FDX fidelity. Detail: [docs/roadmap.md](docs/roadmap.md).
 
 ## Progress log
 

@@ -1,23 +1,25 @@
 # Gaps (ranked)
 
 Ranked by what a working screenwriter misses first, from [parity-checklist.md](parity-checklist.md)
-(`cargo xtask parity`). Parity: 81% weighted (P0 92%, P1 82%, P2 47%).
+(`cargo xtask parity`) and reordered by [user-research.md](user-research.md). Parity: 82% weighted
+(P0 92%, P1 85%, P2 47%).
 
-1. **Selection and copy/paste across elements** (P1). Today selection lives inside one element;
-   selecting a passage of several elements, cutting and pasting it (as Fountain on the clipboard)
-   is the most-used editing operation still missing.
+1. **Anchored notes and comments** (P1, partial). The most-requested feature in
+   [user-research.md](user-research.md): notes attached to a range of text, shown in the margin,
+   kept in Fountain as inline notes and in FDX as script notes.
 2. **Title page layout** (P0, partial). Key/value fields print in a fixed arrangement; writers expect
    free placement and more fields (WGA registration, revision line).
-3. **FDX fidelity** (P0, partial). Open and save styled text (bold, italic, underline runs), script
+3. **Selection that starts or ends mid-element** (P1, partial). Whole elements can be selected,
+   cut, copied and pasted as Fountain; a selection from the middle of one line into another
+   cannot.
+4. **FDX fidelity** (P0, partial). Open and save styled text (bold, italic, underline runs), script
    notes, scene summaries and revision data, and page-layout settings.
-4. **Bold, italic and underline shown as styles** (P2, partial). Fountain emphasis is kept as text;
+5. **Bold, italic and underline shown as styles** (P2, partial). Fountain emphasis is kept as text;
    render it in the editor, preview and PDF.
-5. **Anchored notes and comments** (P1, partial). Notes attached to a range of text, shown in the
-   margin, kept in Fountain as inline notes and in FDX as script notes.
 6. **Outline by sections** (P1, partial). Show `#` sections and sequences as an outline beside the
    navigator and as groups on the index cards.
 7. **Translations** (P1, partial). The ScriptCraft catalog in craft-i18n (`i18n/source-strings.tsv`
-   lists the 282 source texts).
+   lists the 290 source texts).
 8. **Accessibility depth** (P1, partial). Caret and selection reporting on script lines beyond egui's
    text fields; a screen-reader pass; high-contrast theme check.
 9. **Locked pages (A pages)** (P2). Keep page breaks after locking; new material goes on 12A pages.

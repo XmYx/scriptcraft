@@ -26,3 +26,12 @@ pub fn peek(ui: &Ui, key: Key, shift: bool) -> bool {
         })
     })
 }
+
+/// Take the first event matching `pick` out of this frame's input.
+pub fn take_event<T>(ui: &Ui, pick: impl Fn(&Event) -> Option<T>) -> Option<T> {
+    ui.input_mut(|i| {
+        let at = i.events.iter().position(|e| pick(e).is_some())?;
+        let event = i.events.remove(at);
+        pick(&event)
+    })
+}

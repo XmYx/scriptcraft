@@ -41,6 +41,7 @@
 	Ctrl+S / Ctrl+Shift+S
 	Ctrl+Shift+I
 	Ctrl+Shift+P
+	Ctrl+V
 	Ctrl+Z / Ctrl+Shift+Z
 	Dark Page
 	Day scenes
@@ -142,6 +143,7 @@
 	Paper
 	Paper:
 	Parenthetical
+	Paste screenplay text; several paragraphs become elements
 	Previous
 	Production
 	Quit
@@ -178,8 +180,10 @@
 	Script font: egui's built-in monospace face (build with CRAFT_FONTS_DIR for Liberation Mono).
 	ScriptCraft kept changes to “{name}” that were not saved when it last closed.
 	Section
+	Select whole elements (Ctrl+C, Ctrl+X, Delete act on them)
 	Shift+Enter
 	Shift+Tab
+	Shift+↑ / Shift+↓ at an edge
 	Shot
 	Source
 	Source code
@@ -280,7 +284,11 @@
 @id	view.zoom_out
 @plural	Added a stable ID to {n} scene|Added stable IDs to {n} scenes
 @plural	Cleared {n} revision mark|Cleared {n} revision marks
+@plural	Copied {n} element|Copied {n} elements
 @plural	Locked scene numbers; numbered {n} scene|Locked scene numbers; numbered {n} scenes
+@plural	Pasted {n} element|Pasted {n} elements
+@plural	Removed {n} element|Removed {n} elements
 @plural	Replaced {n} match|Replaced {n} matches
+@plural	{n} element selected|{n} elements selected
 @plural	{n} page|{n} pages
 @plural	{n} scene|{n} scenes

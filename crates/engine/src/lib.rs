@@ -8,6 +8,7 @@
 //! - [`io`]: opening Fountain and FDX, saving Fountain atomically, exporting.
 
 pub mod autosave;
+pub mod clipboard;
 pub mod command;
 pub mod complete;
 mod document;

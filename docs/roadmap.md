@@ -1,6 +1,6 @@
 # Roadmap (detail)
 
-The summary is [ROADMAP.md](../ROADMAP.md). Parity: 81% weighted
+The summary is [ROADMAP.md](../ROADMAP.md). Parity: 82% weighted
 ([target-app-parity.md](target-app-parity.md)).
 
 ## Done in the polish pass (2026-11-17)
@@ -11,10 +11,18 @@ revision mode (marks, colours, kept in Fountain); find and replace; spell-check 
 statistics, character and location reports; autosave with recovery and backups; focus mode,
 typewriter scrolling and a dark page.
 
+## Done in the user-research pass (2026-11-17)
+
+Researched what users of the reference apps complain about and ask for
+([user-research.md](user-research.md)). From it: the editor draws only nearby lines (a 90-page
+script went from 53 ms to about 1.3 ms a frame), and whole elements can be selected, cut and copied
+as Fountain, with multi-paragraph paste turned into typed elements.
+
 ## Now: alpha
 
-1. **Selection and copy/paste across elements.**
-2. **Title page layout** and **FDX fidelity** (styled text, script notes, revision data).
+1. **Anchored notes and comments** (the most-requested feature).
+2. **Title page layout**, **mid-element selection** and **FDX fidelity** (styled text, script
+   notes, revision data).
 3. **Styled text** (bold, italic, underline) in editor, preview and PDF.
 4. **Anchored notes** and an **outline of sections**.
 5. **Shell on craft-libs**: `craft-menu`, `craft-keymap`, `craft-settings` (recent files, user

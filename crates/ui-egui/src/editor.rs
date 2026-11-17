@@ -55,6 +55,10 @@ pub struct EditorState {
     dismissed: Option<(usize, String)>,
     /// Select this range on the next frame: element, start, length (a find match).
     pending_select: Option<(usize, usize, usize)>,
+    /// Whole elements selected from the first index to the second (Shift+↑/↓ at an edge).
+    pub(crate) block: Option<(usize, usize)>,
+    /// Last drawn height of each element by widget id, with the zoom it was measured at.
+    pub(crate) heights: std::collections::HashMap<u64, (u32, f32)>,
     /// The caret's character offset in the focused element, as of the last frame.
     pub caret_hint: Option<usize>,
     /// Misspelled byte ranges by text, so a line is checked once per change, not per frame.
@@ -74,6 +78,8 @@ impl EditorState {
             pending_select: None,
             spell_cache: std::collections::HashMap::new(),
             caret_hint: None,
+            heights: std::collections::HashMap::new(),
+            block: None,
         };
         s.reset_ids(elements);
         s
@@ -95,6 +101,22 @@ impl EditorState {
         if at < self.ids.len() {
             self.ids.remove(at);
         }
+    }
+
+    /// The selected elements, in order.
+    pub(crate) fn block_range(&self) -> Option<std::ops::Range<usize>> {
+        self.block.map(|(a, b)| a.min(b)..a.max(b) + 1)
+    }
+
+    /// The stable widget number of element `i` (0 when it has none yet).
+    pub(crate) fn id_value(&self, i: usize) -> u64 {
+        self.ids.get(i).copied().unwrap_or(u64::MAX)
+    }
+
+    /// Elements that must be real text fields even off screen: the focused one (egui drops the
+    /// focus of a widget that is not drawn) and those the next frame focuses or scrolls to.
+    pub(crate) fn must_draw(&self, i: usize) -> bool {
+        self.focused == Some(i) || self.pending_focus.is_some_and(|(e, _)| e == i) || self.scroll_to == Some(i)
     }
 
     fn id(&mut self, i: usize) -> Id {
@@ -131,12 +153,37 @@ impl EditorState {
 
 /// What a key press asked for; applied after the elements are drawn.
 enum Action {
-    Enter { element: usize, at: usize, len: usize },
-    Tab { element: usize, forward: bool },
+    Enter {
+        element: usize,
+        at: usize,
+        len: usize,
+    },
+    Tab {
+        element: usize,
+        forward: bool,
+    },
     BackspaceAtStart(usize),
     FocusPrevious(usize),
     FocusNext(usize),
-    Accept { element: usize, text: String, then_enter: bool },
+    Accept {
+        element: usize,
+        text: String,
+        then_enter: bool,
+    },
+    /// Select whole elements from `anchor` to `to` (Shift+↑/↓ at an element's edge).
+    Extend {
+        anchor: usize,
+        to: usize,
+    },
+    CopyBlock,
+    CutBlock,
+    DeleteBlock,
+    ClearBlock,
+    /// Paste screenplay text as elements after element `at`.
+    Paste {
+        at: usize,
+        text: String,
+    },
 }
 
 struct Geometry {
@@ -188,14 +235,44 @@ pub fn show(app: &mut ScriptApp, ui: &mut Ui) {
                 // The frame sits in a horizontal row; the page itself flows top to bottom.
                 ui.vertical(|ui| {
                     ui.add_space(ppi);
+                    // Only the lines near the window are real text fields; the rest are blank
+                    // space of their measured (or estimated) height, so long scripts stay fast.
+                    let clip = ui.clip_rect();
+                    let margin = clip.height().max(200.0);
+                    let zoom_key = (app.zoom * 100.0).round() as u32;
                     for i in 0..n {
                         let label = scene_labels.get(i).cloned().flatten();
+                        let top = ui.cursor().top();
+                        let (space, height) = estimate(app, i, &geo, zoom_key);
+                        let near = top + space + height >= clip.top() - margin && top <= clip.bottom() + margin;
+                        let rect = if near || app.editor.must_draw(i) {
+                            let rect = element(app, ui, i, &geo, label, &mut action);
+                            if let Some(r) = rect {
+                                let key = app.editor.id_value(i);
+                                app.editor.heights.insert(key, (zoom_key, r.height()));
+                            }
+                            rect
+                        } else {
+                            if i > 0 {
+                                ui.add_space(space);
+                            }
+                            let r = egui::Rect::from_min_size(ui.cursor().min, vec2(paper_w, height));
+                            ui.add_space(height);
+                            Some(r)
+                        };
                         if let Some(slot) = rects.get_mut(i) {
-                            *slot = element(app, ui, i, &geo, label, &mut action);
+                            *slot = rect;
                         }
                     }
                     ui.add_space(ppi);
                     page_rules(ui, &geo, paper_w, &page_starts, &rects);
+                    if let Some(range) = app.editor.block_range() {
+                        let band = ui.visuals().selection.bg_fill.gamma_multiply(0.45);
+                        for r in range.filter_map(|k| rects.get(k).copied().flatten()) {
+                            let full = egui::Rect::from_x_y_ranges(geo.paper_left..=geo.paper_left + paper_w, r.y_range());
+                            ui.painter().rect_filled(full.expand2(vec2(0.0, 2.0)), 0.0, band);
+                        }
+                    }
                 });
             });
         });
@@ -203,7 +280,7 @@ pub fn show(app: &mut ScriptApp, ui: &mut Ui) {
     });
 
     if let Some(action) = action {
-        apply(app, action);
+        apply(app, &ctx, action);
     }
 }
 
@@ -221,6 +298,21 @@ fn scene_labels(app: &ScriptApp) -> Vec<Option<String>> {
             })
         })
         .collect()
+}
+
+/// Blank lines before element `i` and its height: measured when it was last drawn at this zoom,
+/// else estimated from its wrapped line count.
+fn estimate(app: &ScriptApp, i: usize, geo: &Geometry, zoom_key: u32) -> (f32, f32) {
+    let Some(e) = app.doc.screenplay().elements.get(i) else { return (0.0, 0.0) };
+    let (width, before) = format_of(e.kind).map_or((60, 1), |f| (f.width, f.space_before));
+    let space = before as f32 * geo.row_h;
+    if let Some((z, h)) = app.editor.heights.get(&app.editor.id_value(i))
+        && *z == zoom_key
+    {
+        return (space, *h);
+    }
+    let lines = scriptcraft_layout::wrap(&e.display_text(), width).len().max(1);
+    (space, lines as f32 * geo.row_h)
 }
 
 fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_label: Option<String>, action: &mut Option<Action>) -> Option<Rect> {
@@ -331,6 +423,9 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
         None => kind_label(e.kind).to_owned(),
     };
     ui.ctx().accesskit_node_builder(response.id, |node| node.set_label(name));
+    if response.clicked() {
+        app.editor.block = None;
+    }
     if response.has_focus() {
         app.editor.focused = Some(i);
         app.editor.caret_hint = output.cursor_range.map(|r| r.primary.index.0);
@@ -386,6 +481,46 @@ fn keyboard(app: &mut ScriptApp, ui: &Ui, id: Id, i: usize, len: usize, text: &s
     let at = range.map_or(len, |r| r.primary.index.0).min(len);
     let collapsed = range.is_none_or(|r| r.primary.index.0 == r.secondary.index.0);
     let count = app.doc.screenplay().elements.len();
+    // Multi-paragraph pastes become elements (screenplay text from other apps keeps its types).
+    let pasted = keys::take_event(ui, |e| match e {
+        egui::Event::Paste(t) if scriptcraft_engine::clipboard::is_screenplay(t) => Some(t.clone()),
+        _ => None,
+    });
+    if let Some(text) = pasted {
+        *action = Some(Action::Paste { at: i, text });
+        return;
+    }
+    if let Some((anchor, head)) = app.editor.block {
+        *action = if keys::take_event(ui, |e| matches!(e, egui::Event::Copy).then_some(())).is_some() {
+            Some(Action::CopyBlock)
+        } else if keys::take_event(ui, |e| matches!(e, egui::Event::Cut).then_some(())).is_some() {
+            Some(Action::CutBlock)
+        } else if keys::take(ui, Key::Delete, false) || keys::take(ui, Key::Backspace, false) {
+            Some(Action::DeleteBlock)
+        } else if keys::take(ui, Key::ArrowUp, true) {
+            Some(Action::Extend { anchor, to: head.saturating_sub(1) })
+        } else if keys::take(ui, Key::ArrowDown, true) {
+            Some(Action::Extend { anchor, to: (head + 1).min(count.saturating_sub(1)) })
+        } else if keys::take(ui, Key::Escape, false)
+            || ui.input(|inp| inp.events.iter().any(|e| matches!(e, egui::Event::Text(_) | egui::Event::Key { pressed: true, .. })))
+        {
+            // Any other key ends the selection (and still does its usual thing).
+            Some(Action::ClearBlock)
+        } else {
+            None
+        };
+        return;
+    }
+    if collapsed && at == 0 && i > 0 && keys::peek(ui, Key::ArrowUp, true) {
+        keys::take(ui, Key::ArrowUp, true);
+        *action = Some(Action::Extend { anchor: i, to: i - 1 });
+        return;
+    }
+    if collapsed && at == len && i + 1 < count && keys::peek(ui, Key::ArrowDown, true) {
+        keys::take(ui, Key::ArrowDown, true);
+        *action = Some(Action::Extend { anchor: i, to: i + 1 });
+        return;
+    }
     if !suggestions.is_empty() {
         if keys::take(ui, Key::ArrowDown, false) {
             app.editor.suggestion = (app.editor.suggestion + 1) % suggestions.len();
@@ -456,7 +591,7 @@ fn page_rules(ui: &Ui, geo: &Geometry, paper_w: f32, starts: &[scriptcraft_layou
     }
 }
 
-fn apply(app: &mut ScriptApp, action: Action) {
+fn apply(app: &mut ScriptApp, ctx: &egui::Context, action: Action) {
     match action {
         Action::Enter { element, at, len } => {
             let opened_above = at == 0 && len > 0;
@@ -480,11 +615,43 @@ fn apply(app: &mut ScriptApp, action: Action) {
         }
         Action::FocusPrevious(element) => app.editor.focus_at(element.saturating_sub(1), usize::MAX),
         Action::FocusNext(element) => app.editor.focus_at(element + 1, 0),
+        Action::Extend { anchor, to } => {
+            app.editor.block = Some((anchor, to));
+            app.editor.focus_at(to, 0);
+            let n = anchor.abs_diff(to) + 1;
+            app.set_status(crate::i18n::I18N.trn(crate::i18n::current(), n as u64, "{n} element selected", "{n} elements selected"));
+        }
+        Action::ClearBlock => app.editor.block = None,
+        Action::CopyBlock | Action::CutBlock | Action::DeleteBlock => {
+            let Some(range) = app.editor.block_range() else { return };
+            let n = range.len();
+            if !matches!(action, Action::DeleteBlock) {
+                ctx.copy_text(scriptcraft_engine::clipboard::copy(app.doc.screenplay(), range.clone()));
+            }
+            if matches!(action, Action::CopyBlock) {
+                app.set_status(crate::i18n::I18N.trn(crate::i18n::current(), n as u64, "Copied {n} element", "Copied {n} elements"));
+                return;
+            }
+            let caret = app.doc.edit(|sp| scriptcraft_engine::clipboard::delete(sp, range));
+            app.editor.block = None;
+            app.editor.reset_ids(app.doc.screenplay().elements.len());
+            app.editor.focus_at(caret, usize::MAX);
+            app.set_status(crate::i18n::I18N.trn(crate::i18n::current(), n as u64, "Removed {n} element", "Removed {n} elements"));
+        }
+        Action::Paste { at, text } => {
+            if let Some(range) = app.doc.edit(|sp| scriptcraft_engine::clipboard::paste(sp, at, &text)) {
+                app.editor.block = None;
+                app.editor.reset_ids(app.doc.screenplay().elements.len());
+                app.editor.focus_at(range.end.saturating_sub(1), usize::MAX);
+                let n = range.len();
+                app.set_status(crate::i18n::I18N.trn(crate::i18n::current(), n as u64, "Pasted {n} element", "Pasted {n} elements"));
+            }
+        }
         Action::Accept { element, text, then_enter } => {
             let len = text.chars().count();
             app.doc.set_text(element, text);
             if then_enter {
-                apply(app, Action::Enter { element, at: len, len });
+                apply(app, ctx, Action::Enter { element, at: len, len });
             } else {
                 app.editor.focus_at(element, usize::MAX);
             }
