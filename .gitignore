@@ -3,6 +3,10 @@ plan/
 /target
 /target-*/
 /dist
+/corpus
+/log
 .DS_Store
 /.claude/
 /craft-fonts/
+/build-flatpak/
+/.flatpak-builder/

@@ -19,3 +19,7 @@ egui = { workspace = true }
 eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "clipboard", "wayland", "x11"] }
 image = { workspace = true }
 log = { workspace = true }
+
+[build-dependencies]
+# Icon + VERSIONINFO for scriptcraft.exe; build.rs only uses it when the target is Windows.
+winresource = "0.1"

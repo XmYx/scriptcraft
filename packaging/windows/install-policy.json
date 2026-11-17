@@ -1,0 +1,57 @@
+{
+  "id": "scriptcraft",
+  "name": "ScriptCraft",
+  "upgradeCode": "A0E9E0A8-ECC2-4229-B1C0-52EEBD5A7728",
+  "sources": [
+    "scriptcraft.wxs"
+  ],
+  "icon": "assets/app-icon/scriptcraft.ico",
+  "localization": [],
+  "extensions": [
+    "UI"
+  ],
+  "payloads": [
+    "NOTICE",
+    "scriptcraft-cli.exe",
+    "scriptcraft.exe"
+  ],
+  "registry": [
+    [
+      "-1",
+      "Software\\Classes\\Applications\\scriptcraft.exe",
+      "FriendlyAppName",
+      "ScriptCraft"
+    ],
+    [
+      "-1",
+      "Software\\Classes\\Applications\\scriptcraft.exe\\shell\\open\\command",
+      "",
+      "\"[#ScriptcraftExe]\" \"%1\""
+    ],
+    [
+      "-1",
+      "Software\\Classes\\Applications\\scriptcraft.exe\\SupportedTypes",
+      ".fountain",
+      ""
+    ],
+    [
+      "-1",
+      "Software\\Classes\\Applications\\scriptcraft.exe\\SupportedTypes",
+      ".fdx",
+      ""
+    ],
+    [
+      "-1",
+      "Software\\Classes\\.fdx\\OpenWithProgids",
+      "ScriptCraft.Screenplay",
+      ""
+    ],
+    [
+      "-1",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\scriptcraft.exe",
+      "",
+      "[#ScriptcraftExe]"
+    ]
+  ],
+  "mode": "dualScope"
+}

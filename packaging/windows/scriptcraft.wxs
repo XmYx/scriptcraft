@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <?ifndef HasCraftFontLicences ?>
+  <?define HasCraftFontLicences=0 ?>
+  <?endif?>
+  <Package Name="ScriptCraft" Manufacturer="Learning Machines LLC" Version="$(var.Version)" UpgradeCode="A0E9E0A8-ECC2-4229-B1C0-52EEBD5A7728" Scope="perUserOrMachine" Compressed="yes" Language="1033">
+    <SummaryInformation Description="ScriptCraft screenwriting" Manufacturer="Learning Machines LLC" />
+    <?include $(sys.SOURCEFILEDIR)install-policy.wxi?>
+    <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
+         (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of ScriptCraft is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="ScriptcraftIcon.ico" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="ScriptcraftIcon.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://getartcraft.com/apps/scriptcraft" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://getartcraft.com/apps/scriptcraft" />
+    <Property Id="ARPHELPLINK" Value="https://discord.gg/artcraft" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="CraftSuiteFolder" Name="ArtCraft">
+        <Directory Id="INSTALLFOLDER" Name="ScriptCraft" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="ScriptCraft" Level="1">
+      <?if $(var.HasCraftFontLicences) = 1 ?>
+      <ComponentGroupRef Id="CraftFontLicences" />
+      <?endif?>
+      <ComponentGroupRef Id="ScriptcraftFiles" />
+    </Feature>
+  <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2" Condition="NOT Installed" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="NOT Installed" />
+    </UI>
+  </Package>
+
+  <Fragment>
+    <?if $(var.HasCraftFontLicences) = 1 ?>
+    <ComponentGroup Id="CraftFontLicences" Directory="INSTALLFOLDER">
+      <Files Include="$(var.DocsDir)\**" />
+    </ComponentGroup>
+    <?endif?>
+    <ComponentGroup Id="ScriptcraftFiles" Directory="INSTALLFOLDER">
+      <Component Id="ScriptcraftApp" Guid="01CA96A5-5F5F-4052-8600-25DE1951F931">
+        <File Id="ScriptcraftNotice" Source="$(var.BinDir)\NOTICE" KeyPath="no" />
+        <File Id="ScriptcraftExe" Source="$(var.BinDir)\scriptcraft.exe" KeyPath="yes">
+          <!-- No Icon here, so the shortcut shows the icon embedded in scriptcraft.exe (build.rs). An
+               MSI Icon is cached under %APPDATA%\Microsoft\Installer\{ProductCode}\, and every
+               update is a major upgrade with a new ProductCode that deletes the old folder. A
+               taskbar pin is a copy of this shortcut that the update never touches, so it kept
+               pointing at the deleted file and lost its icon (#1114). The exe's path survives
+               updates; the shortcut is not advertised, so it targets that path and its icon is the
+               exe's own. The Icon above stays for ARPPRODUCTICON (Apps and features). -->
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="ScriptCraft" Description="ScriptCraft screenwriting" WorkingDirectory="INSTALLFOLDER" Advertise="no" />
+        </File>
+
+        <!-- .fountain: ScriptCraft's own format (plain-text Fountain screenplays). -->
+        <ProgId Id="ScriptCraft.Screenplay" Description="Fountain Screenplay" Icon="ScriptcraftExe" IconIndex="0">
+          <Extension Id="fountain" ContentType="text/x-fountain">
+            <Verb Id="open" Command="Open" TargetFile="ScriptcraftExe" Argument="&quot;%1&quot;" />
+          </Extension>
+        </ProgId>
+
+        <!-- "Open with" for FDX screenplays, without becoming the default. -->
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\scriptcraft.exe" Name="FriendlyAppName" Value="ScriptCraft" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\scriptcraft.exe\shell\open\command" Value="&quot;[#ScriptcraftExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\scriptcraft.exe\SupportedTypes" Name=".fountain" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\scriptcraft.exe\SupportedTypes" Name=".fdx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.fdx\OpenWithProgids" Name="ScriptCraft.Screenplay" Value="" Type="string" />
+
+        <RegistryValue Root="HKMU" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\scriptcraft.exe" Value="[#ScriptcraftExe]" Type="string" />
+      <RegistryValue Root="HKMU" Key="Software\ScriptCraft" Name="InstallDir" Value="[INSTALLFOLDER]" Type="string" />
+      </Component>
+
+      <Component Id="ScriptcraftCli">
+        <File Id="ScriptcraftCliExe" Source="$(var.BinDir)\scriptcraft-cli.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
