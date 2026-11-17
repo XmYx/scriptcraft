@@ -58,3 +58,28 @@ fn truncated_and_corrupt_files_are_errors_not_panics() {
         let _ = scriptcraft_fdx::import(&flipped);
     }
 }
+
+#[test]
+fn export_round_trips_everything_import_reads() {
+    let (sp, _) = scriptcraft_fdx::import(FIXTURE).unwrap();
+    let (xml, report) = scriptcraft_fdx::export(&sp);
+    assert_eq!(report.left_out, 0);
+    let (back, _) = scriptcraft_fdx::import(xml.as_bytes()).unwrap();
+    assert_eq!(back, sp, "{xml}");
+}
+
+#[test]
+fn sample_script_survives_fdx() {
+    let sp = scriptcraft_fountain::parse(include_str!("../../../assets/samples/the-lantern-keeper.fountain"));
+    let (xml, report) = scriptcraft_fdx::export(&sp);
+    assert_eq!(report.left_out, 4, "section, synopsis, note and omitted text");
+    let (back, _) = scriptcraft_fdx::import(xml.as_bytes()).unwrap();
+    // FDX marks only the second speech of dual dialogue; the sample marks both.
+    let mut printed: Vec<_> = sp.elements.iter().filter(|e| e.kind.is_printed()).cloned().collect();
+    if let Some(ari) = printed.iter_mut().find(|e| e.text == "ARI" && e.dual) {
+        ari.dual = false;
+    }
+    assert_eq!(back.elements, printed);
+    assert_eq!(back.title(), sp.title());
+    assert!(xml.contains("<DualDialogue>"));
+}

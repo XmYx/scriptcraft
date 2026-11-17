@@ -1,0 +1,1 @@
+- Export PDF and FDX; index cards; revision mode with coloured pages; locked scene numbers; find and replace; spell-check; reports; dual dialogue side by side and automatic (CONT'D); autosave with crash recovery and backups; focus mode, typewriter scrolling and a dark page.

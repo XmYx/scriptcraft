@@ -15,4 +15,11 @@ On macOS use Cmd for Ctrl. The rules for Enter and Tab are ScriptCraft's own (`c
 | Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S | New, open, save, save as |
 | Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y | Undo, redo (typing in one element is one step) |
 | Ctrl+Shift+P | Page preview |
+| Ctrl+Shift+I | Index cards: arrow keys move between cards, Enter opens the scene, Alt+←/→ move it |
+| Alt+↑ / Alt+↓ | Move the current scene earlier / later |
+| Ctrl+F, Ctrl+H | Find, find and replace (Enter: next match, Shift+Enter: previous, Esc: close) |
+| F3, Shift+F3 | Next, previous match |
+| F7 | Next misspelled word, with suggestions in the status bar |
+| Ctrl+P | Export PDF |
+| F11 | Focus mode (Esc leaves it) |
 | Ctrl+=, Ctrl+- | Zoom |

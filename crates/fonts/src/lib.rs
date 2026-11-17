@@ -16,6 +16,16 @@ pub fn face(style: &str) -> Option<&'static EmbeddedFace> {
     SCREENPLAY_FONTS.iter().find(|f| f.style.eq_ignore_ascii_case(style))
 }
 
+/// The face PDF export embeds: Liberation Mono when embedded, else Hack (MIT and Bitstream Vera
+/// licence, the monospace face egui ships), so export works in every build. Both are
+/// fixed-pitch at 0.6 em, so the 10-characters-per-inch grid holds.
+pub fn pdf_face() -> (&'static str, &'static [u8]) {
+    match face("Regular") {
+        Some(f) => (f.family, f.bytes),
+        None => ("Hack", epaint_default_fonts::HACK_REGULAR),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

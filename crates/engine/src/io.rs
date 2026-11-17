@@ -23,6 +23,8 @@ pub enum EngineError {
     SceneList(String),
     #[error("this script has not been saved yet; choose Save As")]
     NoPath,
+    #[error("could not write the PDF: {0}")]
+    Pdf(String),
 }
 
 /// The kinds of file ScriptCraft opens.
@@ -93,9 +95,44 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), EngineError> {
     result.map_err(err)
 }
 
-/// Save as Fountain.
+/// Fountain text for a script, with its revision marks kept (see [`crate::revisions`]).
+pub fn fountain_text(sp: &Screenplay) -> String {
+    match crate::revisions::with_block(sp) {
+        Some(with) => scriptcraft_fountain::write(&with),
+        None => scriptcraft_fountain::write(sp),
+    }
+}
+
+/// Save as Fountain. The previous version is kept as a backup ([`crate::autosave::backup_path`])
+/// and the autosave is removed.
 pub fn save_fountain(path: &Path, sp: &Screenplay) -> Result<(), EngineError> {
-    write_atomic(path, scriptcraft_fountain::write(sp).as_bytes())
+    if path.is_file() {
+        let _ = std::fs::copy(path, crate::autosave::backup_path(path));
+    }
+    write_atomic(path, fountain_text(sp).as_bytes())?;
+    crate::autosave::discard(Some(path));
+    Ok(())
+}
+
+/// Write the autosave of a script (see [`crate::autosave`]).
+pub fn autosave(path: Option<&Path>, sp: &Screenplay) -> Result<(), EngineError> {
+    write_atomic(&crate::autosave::autosave_path(path), fountain_text(sp).as_bytes())
+}
+
+/// Read an autosave back.
+pub fn read_autosave(autosave: &Path) -> Result<Screenplay, EngineError> {
+    let bytes = read_bounded(autosave)?;
+    let mut sp = scriptcraft_fountain::parse_bytes(&bytes)?;
+    crate::revisions::take(&mut sp);
+    Ok(sp)
+}
+
+/// Save as FDX (an export: the script keeps its Fountain file). Returns how many outline and note
+/// elements FDX could not carry.
+pub fn save_fdx(path: &Path, sp: &Screenplay) -> Result<usize, EngineError> {
+    let (xml, report) = scriptcraft_fdx::export(sp);
+    write_atomic(path, xml.as_bytes())?;
+    Ok(report.left_out)
 }
 
 /// The scene list for storyboards as JSON (see `docs/interop.md`).
@@ -103,6 +140,21 @@ pub fn scene_list_json(sp: &Screenplay, setup: &PageSetup, source: Option<String
     let layout = paginate(sp, setup);
     let list = scriptcraft_interchange::scene_list(sp, &layout, source);
     scriptcraft_interchange::to_json(&list).map_err(|e| EngineError::SceneList(e.to_string()))
+}
+
+/// The paginated script as PDF, in Liberation Mono (or the fallback face), with revision labels
+/// in English. The interface passes its own labels through [`pdf_with`].
+pub fn pdf(sp: &Screenplay, setup: &PageSetup) -> Result<Vec<u8>, EngineError> {
+    pdf_with(sp, setup, |level| format!("{} Revision", scriptcraft_model::revision_colour(level)))
+}
+
+/// [`pdf`] with the revision label for each level supplied by the caller.
+pub fn pdf_with(sp: &Screenplay, setup: &PageSetup, revision_label: fn(u8) -> String) -> Result<Vec<u8>, EngineError> {
+    let layout = paginate(sp, setup);
+    let (_, font) = scriptcraft_fonts::pdf_face();
+    let author = sp.title_page.get("Author").map(str::to_owned);
+    let info = scriptcraft_pdf::Info { title: sp.title().map(str::to_owned), author, revision_label: Some(revision_label) };
+    scriptcraft_pdf::export(&layout, font, &info).map_err(|e| EngineError::Pdf(e.to_string()))
 }
 
 /// The paginated script as plain text, pages separated by form feeds.

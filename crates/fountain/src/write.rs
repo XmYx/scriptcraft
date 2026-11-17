@@ -140,7 +140,7 @@ mod tests {
     use scriptcraft_model::TitleField;
 
     fn sp(elements: Vec<Element>) -> Screenplay {
-        Screenplay { title_page: TitlePage::default(), elements }
+        Screenplay { title_page: TitlePage::default(), elements, ..Screenplay::default() }
     }
 
     #[track_caller]

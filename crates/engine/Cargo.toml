@@ -16,5 +16,8 @@ scriptcraft-fountain = { workspace = true }
 scriptcraft-fdx = { workspace = true }
 scriptcraft-layout = { workspace = true }
 scriptcraft-interchange = { workspace = true }
+scriptcraft-pdf = { workspace = true }
+craft-proof = { workspace = true }
+scriptcraft-fonts = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }

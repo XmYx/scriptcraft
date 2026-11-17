@@ -14,6 +14,9 @@ Commands:
   scenes  <script> [--out <file.json>]   scene list for storyboards (JSON, docs/interop.md)
   convert <script> <out.fountain>        open Fountain or FDX, write Fountain
   pages   <script> [--scene-numbers]     the paginated script as plain text
+  pdf     <script> <out.pdf> [--scene-numbers]  the paginated script as PDF
+  fdx     <script> <out.fdx>             write FDX
+  report  <script>                       characters and locations, as tables
   stats   <script>                       title, pages, scenes and speaking characters
   commands                               the app's command ids and labels
 
@@ -113,14 +116,52 @@ fn run(args: &Args) -> Result<Outcome, String> {
             let opened = open(path)?;
             write_or_print(args.out.as_deref(), &io::plain_text(&opened.screenplay, &args.setup))?;
         }
+        "pdf" => {
+            let (Ok(input), Ok(output)) = (script_arg(args, 0), script_arg(args, 1)) else {
+                return Ok(Outcome::Usage("pdf needs a script and an output .pdf file".into()));
+            };
+            let sp = open(input)?.screenplay;
+            let bytes = io::pdf(&sp, &args.setup).map_err(|e| e.to_string())?;
+            io::write_atomic(output, &bytes).map_err(|e| e.to_string())?;
+        }
+        "fdx" => {
+            let (Ok(input), Ok(output)) = (script_arg(args, 0), script_arg(args, 1)) else {
+                return Ok(Outcome::Usage("fdx needs a script and an output .fdx file".into()));
+            };
+            let sp = open(input)?.screenplay;
+            let left_out = io::save_fdx(output, &sp).map_err(|e| e.to_string())?;
+            if left_out > 0 {
+                eprintln!("{left_out} outline and note elements are not part of FDX and were left out");
+            }
+        }
+        "report" => {
+            let Ok(path) = script_arg(args, 0) else { return Ok(Outcome::Usage("report needs a script file".into())) };
+            let sp = open(path)?.screenplay;
+            let layout = paginate(&sp, &args.setup);
+            println!("CHARACTER\tSPEECHES\tWORDS\tSCENES\tFIRST PAGE");
+            for c in scriptcraft_engine::reports::characters(&sp, &layout) {
+                println!("{}\t{}\t{}\t{}\t{}", c.name, c.speeches, c.words, c.scenes, c.first_page);
+            }
+            println!();
+            println!("LOCATION\tINT/EXT\tSCENES\tEIGHTHS");
+            for l in scriptcraft_engine::reports::locations(&sp, &layout) {
+                println!("{}\t{}\t{}\t{}", l.location, l.interior_exterior, l.scenes, l.eighths);
+            }
+        }
         "stats" => {
             let Ok(path) = script_arg(args, 0) else { return Ok(Outcome::Usage("stats needs a script file".into())) };
             let sp = open(path)?.screenplay;
             let layout = paginate(&sp, &args.setup);
+            let s = scriptcraft_engine::reports::statistics(&sp, &layout);
             println!("title: {}", sp.title().unwrap_or("(none)"));
             println!("paper: {}", args.setup.paper.label());
-            println!("pages: {}", layout.page_count());
-            println!("scenes: {}", sp.scene_heading_indices().count());
+            println!("pages: {}", s.pages);
+            println!(
+                "scenes: {} ({} interior, {} exterior; {} day, {} night)",
+                s.scenes, s.interior_scenes, s.exterior_scenes, s.day_scenes, s.night_scenes
+            );
+            println!("words: {} ({} of dialogue)", s.words, s.dialogue_words);
+            println!("locations: {}", s.locations);
             println!("elements: {}", sp.elements.len());
             let mut speeches: Vec<(String, usize)> = Vec::new();
             for name in sp.elements.iter().filter(|e| e.kind == ElementKind::Character).filter_map(|e| e.character_name()) {

@@ -8,7 +8,7 @@ const LANTERN: &str = include_str!("../../../assets/samples/the-lantern-keeper.f
 fn sample_paginates_on_both_papers() {
     let sp = scriptcraft_fountain::parse(LANTERN);
     for paper in Paper::ALL {
-        let layout = paginate(&sp, &PageSetup { paper, scene_numbers: false });
+        let layout = paginate(&sp, &PageSetup { paper, ..PageSetup::default() });
         assert!(layout.page_count() >= 2, "{paper:?}: {} pages", layout.page_count());
         assert!(layout.title_page.is_some());
         let rows = paper.rows_per_page();
@@ -19,10 +19,17 @@ fn sample_paginates_on_both_papers() {
             }
         }
         // Every printed element has a start, and starts are in reading order.
-        let starts: Vec<usize> = layout.starts.iter().flatten().map(|p| layout.absolute_row(*p)).collect();
-        assert!(starts.windows(2).all(|w| w[0] < w[1]));
         let printed = sp.elements.iter().filter(|e| e.kind.is_printed()).count();
-        assert_eq!(starts.len(), printed);
+        assert_eq!(layout.starts.iter().flatten().count(), printed);
+        // Outside speeches (dual dialogue puts two speeches on the same rows), starts follow reading order.
+        let starts: Vec<usize> = layout
+            .starts
+            .iter()
+            .zip(&sp.elements)
+            .filter(|(_, e)| !e.kind.is_speech())
+            .filter_map(|(p, _)| p.map(|p| layout.absolute_row(p)))
+            .collect();
+        assert!(starts.windows(2).all(|w| w[0] < w[1]));
         // No page ends with a scene heading or a character cue.
         for page in &layout.pages {
             let last = page.lines.iter().rfind(|l| l.role != Role::SceneNumber);

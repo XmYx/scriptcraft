@@ -10,6 +10,8 @@
 
 mod icons;
 mod licenses;
+mod parity;
+mod pdf_png;
 mod strings;
 
 use std::path::{Path, PathBuf};
@@ -29,7 +31,9 @@ fn main() {
         "strings" => strings::run(&root(), &std::env::args().skip(2).collect::<Vec<_>>()),
         "progress" => progress(),
         "icons" => icons::run(&root()),
-        _ => Err("usage: cargo xtask <ci | layers | assets | licenses | strings | progress | icons>".to_owned()),
+        "parity" => parity::run(&root()),
+        "pdf-png" => pdf_png::run(&std::env::args().skip(2).collect::<Vec<_>>()),
+        _ => Err("usage: cargo xtask <ci | layers | assets | licenses | strings | progress | icons | parity | pdf-png>".to_owned()),
     };
     if let Err(e) = result {
         eprintln!("xtask {task}: {e}");

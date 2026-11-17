@@ -19,6 +19,27 @@ pub const MUTED: Color32 = Color32::from_rgb(0x6B, 0x6B, 0x6B);
 /// Page-break rules: 3.6:1 on the paper (non-text contrast).
 pub const RULE: Color32 = Color32::from_rgb(0x84, 0x84, 0x90);
 
+/// Underline under misspelled words: 6.5:1 on the light paper, visible on the dark one.
+pub const MISSPELLED: Color32 = Color32::from_rgb(0xC6, 0x28, 0x28);
+
+/// The page's colours: paper, ink, muted text and rules. The dark page keeps the same contrast
+/// rules (ink 13.9:1, muted 6.1:1, rules 3.5:1 on its paper).
+#[derive(Clone, Copy)]
+pub struct Palette {
+    pub paper: Color32,
+    pub ink: Color32,
+    pub muted: Color32,
+    pub rule: Color32,
+}
+
+pub const LIGHT: Palette = Palette { paper: PAPER, ink: INK, muted: MUTED, rule: RULE };
+pub const DARK: Palette = Palette {
+    paper: Color32::from_rgb(0x1E, 0x1F, 0x22),
+    ink: Color32::from_rgb(0xE8, 0xE6, 0xE1),
+    muted: Color32::from_rgb(0xA3, 0xA3, 0xA3),
+    rule: Color32::from_rgb(0x7E, 0x7E, 0x8A),
+};
+
 /// Editor state that is not part of the document.
 pub struct EditorState {
     /// A stable widget id per element, so focus and caret survive inserts above.
@@ -32,11 +53,28 @@ pub struct EditorState {
     suggestion: usize,
     /// Suggestions hidden with Escape for this element and text.
     dismissed: Option<(usize, String)>,
+    /// Select this range on the next frame: element, start, length (a find match).
+    pending_select: Option<(usize, usize, usize)>,
+    /// The caret's character offset in the focused element, as of the last frame.
+    pub caret_hint: Option<usize>,
+    /// Misspelled byte ranges by text, so a line is checked once per change, not per frame.
+    pub(crate) spell_cache: std::collections::HashMap<String, Vec<std::ops::Range<usize>>>,
 }
 
 impl EditorState {
     pub fn new(elements: usize) -> EditorState {
-        let mut s = EditorState { ids: Vec::new(), next_id: 0, focused: None, pending_focus: None, scroll_to: None, suggestion: 0, dismissed: None };
+        let mut s = EditorState {
+            ids: Vec::new(),
+            next_id: 0,
+            focused: None,
+            pending_focus: None,
+            scroll_to: None,
+            suggestion: 0,
+            dismissed: None,
+            pending_select: None,
+            spell_cache: std::collections::HashMap::new(),
+            caret_hint: None,
+        };
         s.reset_ids(elements);
         s
     }
@@ -83,6 +121,12 @@ impl EditorState {
     pub fn go_to(&mut self, i: usize) {
         self.focus_at(i, usize::MAX);
     }
+
+    /// Put the caret on element `i` with characters `start..start + len` selected.
+    pub fn select(&mut self, i: usize, start: usize, len: usize) {
+        self.focus_at(i, start + len);
+        self.pending_select = Some((i, start, len));
+    }
 }
 
 /// What a key press asked for; applied after the elements are drawn.
@@ -101,6 +145,9 @@ struct Geometry {
     char_w: f32,
     row_h: f32,
     paper_left: f32,
+    colours: Palette,
+    typewriter: bool,
+    spelling: bool,
 }
 
 pub fn show(app: &mut ScriptApp, ui: &mut Ui) {
@@ -122,12 +169,22 @@ pub fn show(app: &mut ScriptApp, ui: &mut Ui) {
         let side = ((ui.available_width() - paper_w) / 2.0).max(12.0);
         ui.horizontal_top(|ui| {
             ui.add_space(side);
-            egui::Frame::new().fill(PAPER).stroke(Stroke::new(1.0, Color32::from_gray(190))).show(ui, |ui| {
+            let colours = if app.dark_paper { DARK } else { LIGHT };
+            egui::Frame::new().fill(colours.paper).stroke(Stroke::new(1.0, Color32::from_gray(150))).show(ui, |ui| {
                 ui.set_width(paper_w);
                 ui.set_min_height(paper_h_in * ppi);
-                *ui.visuals_mut() = egui::Visuals::light();
+                *ui.visuals_mut() = if app.dark_paper { egui::Visuals::dark() } else { egui::Visuals::light() };
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-                let geo = Geometry { font: font.clone(), small: fonts::script(9.0 * app.zoom), char_w, row_h, paper_left: ui.min_rect().left() };
+                let geo = Geometry {
+                    font: font.clone(),
+                    small: fonts::script(9.0 * app.zoom),
+                    char_w,
+                    row_h,
+                    paper_left: ui.min_rect().left(),
+                    colours,
+                    typewriter: app.typewriter,
+                    spelling: app.spelling,
+                };
                 // The frame sits in a horizontal row; the page itself flows top to bottom.
                 ui.vertical(|ui| {
                     ui.add_space(ppi);
@@ -183,8 +240,13 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
         && target == i
     {
         let mut state = TextEdit::load_state(ui.ctx(), id).unwrap_or_default();
-        let at = char_index.min(e.text.chars().count());
-        state.cursor.set_char_range(Some(CCursorRange::one(CCursor::new(at))));
+        let len = e.text.chars().count();
+        let at = char_index.min(len);
+        let range = match app.editor.pending_select.take() {
+            Some((el, start, n)) if el == i => CCursorRange::two(CCursor::new(start.min(len)), CCursor::new((start + n).min(len))),
+            _ => CCursorRange::one(CCursor::new(at)),
+        };
+        state.cursor.set_char_range(Some(range));
         TextEdit::store_state(ui.ctx(), id, state);
         ui.memory_mut(|m| m.request_focus(id));
         app.editor.pending_focus = None;
@@ -207,13 +269,42 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
     }
 
     let mut buf = if e.kind.is_uppercase() { uppercase_same_length(&e.text) } else { e.text.clone() };
-    let colour = if printed.is_some() { INK } else { MUTED };
+    let colour = if printed.is_some() { geo.colours.ink } else { geo.colours.muted };
     let egui_align = match align {
         TextAlign::Left => Align2::LEFT_TOP,
         TextAlign::Center => Align2::CENTER_TOP,
         TextAlign::Right => Align2::RIGHT_TOP,
     };
     let hint = kind_label(e.kind);
+    if app.editor.spell_cache.len() > 4000 {
+        app.editor.spell_cache.clear();
+    }
+    let check = geo.spelling && scriptcraft_engine::spelling::checked(e.kind);
+    let cache = &mut app.editor.spell_cache;
+    let font = geo.font.clone();
+    let halign = egui_align.x();
+    // Misspelled words get a red wavy-free underline (a plain 1.5 px rule, 6.5:1 on the paper).
+    let mut layouter = move |ui: &Ui, buf: &dyn egui::TextBuffer, wrap_width: f32| {
+        let text = buf.as_str();
+        let ranges =
+            if check { cache.entry(text.to_owned()).or_insert_with(|| scriptcraft_engine::spelling::misspelled(text)).clone() } else { Vec::new() };
+        let mut job = egui::text::LayoutJob::default();
+        job.wrap.max_width = wrap_width;
+        job.halign = halign;
+        let plain = egui::TextFormat { font_id: font.clone(), color: colour, ..Default::default() };
+        let marked = egui::TextFormat { underline: Stroke::new(1.5, MISSPELLED), ..plain.clone() };
+        let mut at = 0;
+        for r in &ranges {
+            if r.start < at || r.end > text.len() {
+                continue;
+            }
+            job.append(text.get(at..r.start).unwrap_or(""), 0.0, plain.clone());
+            job.append(text.get(r.clone()).unwrap_or(""), 0.0, marked.clone());
+            at = r.end;
+        }
+        job.append(text.get(at..).unwrap_or(""), 0.0, plain);
+        ui.fonts_mut(|f| f.layout_job(job))
+    };
     let output = ui
         .horizontal_top(|ui| {
             ui.add_space(left as f32 * geo.char_w);
@@ -229,6 +320,7 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
                 .return_key(Some(egui::KeyboardShortcut::new(egui::Modifiers::SHIFT, Key::Enter)))
                 .align(egui_align)
                 .hint_text(hint)
+                .layouter(&mut layouter)
                 .show(ui)
         })
         .inner;
@@ -241,10 +333,15 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
     ui.ctx().accesskit_node_builder(response.id, |node| node.set_label(name));
     if response.has_focus() {
         app.editor.focused = Some(i);
+        app.editor.caret_hint = output.cursor_range.map(|r| r.primary.index.0);
     }
     if response.changed() && e.kind != ElementKind::PageBreak {
         let text = if e.kind.is_uppercase() { uppercase_same_length(&buf) } else { buf };
         app.doc.set_text(i, text);
+        if geo.typewriter {
+            // Typewriter scrolling: the line being typed stays in the middle of the window.
+            response.scroll_to_me(Some(Align::Center));
+        }
     }
     if app.editor.scroll_to == Some(i) {
         response.scroll_to_me(Some(Align::Center));
@@ -254,7 +351,11 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
     let painter = ui.painter();
     if let Some(label) = scene_label {
         let x = geo.paper_left + 10.0 * geo.char_w;
-        painter.text(pos2(x, rect.top()), Align2::RIGHT_TOP, label, geo.font.clone(), MUTED);
+        painter.text(pos2(x, rect.top()), Align2::RIGHT_TOP, label, geo.font.clone(), geo.colours.muted);
+    }
+    if e.revision > 0 {
+        // The revision mark in the right margin, as printed.
+        painter.text(pos2(geo.paper_left + 80.0 * geo.char_w, rect.top()), Align2::LEFT_TOP, "*", geo.font.clone(), geo.colours.ink);
     }
     if printed.is_none() {
         let tag = match e.kind {
@@ -264,7 +365,7 @@ fn element(app: &mut ScriptApp, ui: &mut Ui, i: usize, geo: &Geometry, scene_lab
             ElementKind::Boneyard => tr("omitted"),
             _ => "",
         };
-        painter.text(pos2(geo.paper_left + 2.0 * geo.char_w, rect.top() + 2.0), Align2::LEFT_TOP, tag, geo.small.clone(), MUTED);
+        painter.text(pos2(geo.paper_left + 2.0 * geo.char_w, rect.top() + 2.0), Align2::LEFT_TOP, tag, geo.small.clone(), geo.colours.muted);
     }
     if focused && !suggestions.is_empty() {
         suggestion_popup(app, ui, rect, i, &suggestions, geo, action);
@@ -350,8 +451,8 @@ fn page_rules(ui: &Ui, geo: &Geometry, paper_w: f32, starts: &[scriptcraft_layou
     for start in starts.iter().filter(|s| s.page > 1) {
         let Some(Some(rect)) = rects.get(start.element) else { continue };
         let y = if start.line_in_element == 0 { rect.top() - geo.row_h * 0.5 } else { rect.top() + start.line_in_element as f32 * geo.row_h };
-        painter.extend(egui::Shape::dashed_line(&[pos2(left + 4.0, y), pos2(right - 4.0, y)], Stroke::new(1.0, RULE), 6.0, 5.0));
-        painter.text(pos2(right - 8.0, y - 2.0), Align2::RIGHT_BOTTOM, format!("{}.", start.page), geo.small.clone(), MUTED);
+        painter.extend(egui::Shape::dashed_line(&[pos2(left + 4.0, y), pos2(right - 4.0, y)], Stroke::new(1.0, geo.colours.rule), 6.0, 5.0));
+        painter.text(pos2(right - 8.0, y - 2.0), Align2::RIGHT_BOTTOM, format!("{}.", start.page), geo.small.clone(), geo.colours.muted);
     }
 }
 

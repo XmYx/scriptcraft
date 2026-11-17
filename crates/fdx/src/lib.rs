@@ -51,7 +51,7 @@ pub fn import(bytes: &[u8]) -> Result<(Screenplay, ImportReport), Error> {
         read_paragraphs(content, &mut elements, &mut report, false);
     }
     let title_page = root.path(&["TitlePage", "Content"]).map(read_title_page).unwrap_or_default();
-    Ok((Screenplay { title_page, elements }, report))
+    Ok((Screenplay { title_page, elements, ..Screenplay::default() }, report))
 }
 
 fn kind_of(fdx_type: &str) -> Option<ElementKind> {
@@ -97,11 +97,15 @@ fn read_paragraphs(content: &El, out: &mut Vec<Element>, report: &mut ImportRepo
             }
             ElementKind::Action
         });
+        if p.attr("StartsNewPage") == Some("Yes") && !out.is_empty() {
+            out.push(Element::new(ElementKind::PageBreak, ""));
+        }
         let text = paragraph_text(p);
         if text.is_empty() && kind != ElementKind::Dialogue {
             report.empty_paragraphs += 1;
             continue;
         }
+        let kind = if fdx_type == "General" && p.attr("Alignment") == Some("Center") { ElementKind::Centered } else { kind };
         let mut e = Element::new(kind, text);
         if kind == ElementKind::SceneHeading {
             e.scene_number = p.attr("Number").map(str::trim).filter(|n| !n.is_empty()).map(str::to_owned);
@@ -154,6 +158,119 @@ fn read_title_page(content: &El) -> TitlePage {
     tp.set("Contact", left.join("\n"));
     tp.set("Draft date", right.join("\n"));
     tp
+}
+
+/// What FDX export could not carry, for the export message.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ExportReport {
+    /// Outline sections, synopses, notes and omitted text left out (FDX keeps them in parts
+    /// ScriptCraft does not write yet).
+    pub left_out: usize,
+}
+
+fn fdx_type(kind: ElementKind) -> Option<&'static str> {
+    Some(match kind {
+        ElementKind::SceneHeading => "Scene Heading",
+        ElementKind::Action => "Action",
+        ElementKind::Character => "Character",
+        ElementKind::Parenthetical => "Parenthetical",
+        ElementKind::Dialogue => "Dialogue",
+        ElementKind::Transition => "Transition",
+        ElementKind::Shot => "Shot",
+        ElementKind::Lyric => "Lyrics",
+        ElementKind::Centered => "General",
+        ElementKind::PageBreak | ElementKind::Section | ElementKind::Synopsis | ElementKind::Note | ElementKind::Boneyard => return None,
+    })
+}
+
+fn paragraph(e: &Element) -> Option<El> {
+    let mut p = El::new("Paragraph").with_attr("Type", fdx_type(e.kind)?);
+    if e.kind == ElementKind::SceneHeading
+        && let Some(n) = &e.scene_number
+    {
+        p.set_attr("Number", n);
+    }
+    if e.kind == ElementKind::Centered {
+        p.set_attr("Alignment", "Center");
+    }
+    Some(p.with_child(El::new("Text").with_text(e.text.as_str())))
+}
+
+/// Write a screenplay as FDX. Everything [`import`] reads round-trips: elements, locked scene
+/// numbers, dual dialogue and the title page.
+pub fn export(sp: &Screenplay) -> (String, ExportReport) {
+    let mut report = ExportReport::default();
+    let mut content = El::new("Content");
+    let elements = &sp.elements;
+    let mut i = 0;
+    // A speech: a character and the parentheticals, dialogue and lyrics after it.
+    let speech_end = |start: usize| {
+        elements
+            .iter()
+            .skip(start + 1)
+            .position(|e| !matches!(e.kind, ElementKind::Parenthetical | ElementKind::Dialogue | ElementKind::Lyric))
+            .map_or(elements.len(), |p| start + 1 + p)
+    };
+    while let Some(e) = elements.get(i) {
+        // Dual dialogue: this speech and the next, whose character is marked dual.
+        if e.kind == ElementKind::Character {
+            let first_end = speech_end(i);
+            if elements.get(first_end).is_some_and(|n| n.kind == ElementKind::Character && n.dual) {
+                let second_end = speech_end(first_end);
+                let mut dual = El::new("DualDialogue");
+                for e in elements.get(i..second_end).unwrap_or_default() {
+                    if let Some(p) = paragraph(e) {
+                        dual.push(p);
+                    }
+                }
+                content.push(El::new("Paragraph").with_child(dual));
+                i = second_end;
+                continue;
+            }
+        }
+        match paragraph(e) {
+            Some(p) => content.push(p),
+            None if e.kind == ElementKind::PageBreak => {
+                // The next paragraph starts a page.
+                if let Some(next) = elements.get(i + 1).and_then(paragraph) {
+                    content.push(next.with_attr("StartsNewPage", "Yes"));
+                    i += 2;
+                    continue;
+                }
+            }
+            None => report.left_out += 1,
+        }
+        i += 1;
+    }
+    let mut root = El::new("FinalDraft").with_attr("DocumentType", "Script").with_attr("Template", "No").with_attr("Version", "5");
+    root.push(content);
+    if !sp.title_page.is_empty() {
+        root.push(El::new("TitlePage").with_child(title_page_content(&sp.title_page)));
+    }
+    let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+    out.push_str(&root.to_xml_pretty("  "));
+    out.push('\n');
+    (out, report)
+}
+
+/// The title page as FDX paragraphs, in the order [`import`] reads them back.
+fn title_page_content(tp: &TitlePage) -> El {
+    let mut content = El::new("Content");
+    let mut para = |text: &str, align: &str| {
+        content.push(El::new("Paragraph").with_attr("Alignment", align).with_child(El::new("Text").with_text(text)));
+    };
+    for key in ["Title", "Credit", "Author", "Source"] {
+        if let Some(v) = tp.get(key) {
+            para(v, "Center");
+        }
+    }
+    if let Some(v) = tp.get("Contact") {
+        para(v, "Left");
+    }
+    if let Some(v) = tp.get("Draft date") {
+        para(v, "Right");
+    }
+    content
 }
 
 #[cfg(test)]

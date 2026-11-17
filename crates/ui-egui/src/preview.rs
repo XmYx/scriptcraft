@@ -39,7 +39,17 @@ pub fn show(app: &mut ScriptApp, ui: &mut Ui) {
             }
             let painter = ui.painter_at(paper.expand(4.0));
             painter.rect_filled(paper.translate(vec2(2.0, 3.0)), 0.0, Color32::from_black_alpha(40));
-            painter.rect(paper, 0.0, PAPER, Stroke::new(1.0, Color32::from_gray(190)), egui::StrokeKind::Inside);
+            // A revised page is printed on its revision's colour of paper.
+            painter.rect(paper, 0.0, revision_paper(page.revision), Stroke::new(1.0, Color32::from_gray(190)), egui::StrokeKind::Inside);
+            if page.revision > 0 {
+                painter.text(
+                    pos2(paper.left() + 15.0 * char_w, paper.top() + 0.5 * ppi),
+                    Align2::LEFT_TOP,
+                    crate::app::revision_label(page.revision),
+                    font.clone(),
+                    INK,
+                );
+            }
             let top = paper.top() + scriptcraft_layout::TOP_MARGIN_IN * ppi;
             if let Some(header) = &page.header {
                 painter.text(pos2(paper.left() + 75.0 * char_w, paper.top() + 0.5 * ppi), Align2::RIGHT_TOP, header, font.clone(), INK);
@@ -59,4 +69,19 @@ fn page_text(page: &scriptcraft_layout::Page) -> String {
     let mut lines: Vec<&scriptcraft_layout::Line> = page.lines.iter().filter(|l| l.role != scriptcraft_layout::Role::SceneNumber).collect();
     lines.sort_by_key(|l| (l.row, l.column));
     lines.iter().map(|l| l.text.as_str()).collect::<Vec<_>>().join("\n")
+}
+
+/// Paper tint for a revision level (0 = white), in the order productions use.
+fn revision_paper(level: u8) -> Color32 {
+    const TINTS: [Color32; 8] = [
+        Color32::from_rgb(0xE3, 0xEE, 0xFF),
+        Color32::from_rgb(0xFD, 0xE4, 0xEC),
+        Color32::from_rgb(0xFF, 0xF6, 0xCC),
+        Color32::from_rgb(0xE2, 0xF5, 0xE2),
+        Color32::from_rgb(0xF6, 0xE5, 0xB0),
+        Color32::from_rgb(0xF4, 0xEA, 0xD5),
+        Color32::from_rgb(0xFB, 0xDF, 0xD2),
+        Color32::from_rgb(0xF7, 0xD4, 0xDA),
+    ];
+    if level == 0 { PAPER } else { TINTS.get(usize::from(level - 1) % TINTS.len()).copied().unwrap_or(PAPER) }
 }

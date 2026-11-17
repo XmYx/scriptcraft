@@ -36,5 +36,14 @@ The text block is the same on both papers; A4 has a slightly narrower right marg
 - Page numbers (`2.`) sit at the top right from page 2; the title page is not numbered.
 - With *Format ▸ Scene Numbers*, numbers print in both margins of each heading.
 
-Not yet: dual dialogue side by side (it is laid out one speech after the other), widow and orphan
-control within action, revision marks, locked pages, configurable element styles.
+- **Automatic (CONT'D):** when the character who spoke last in the scene speaks again, the cue gets
+  `(CONT'D)` (Format ▸ Automatic (CONT'D), on by default; a cue that already says CONT'D is left alone).
+- **Dual dialogue:** a speech whose cue is marked dual sits beside the speech before it. Left
+  column: cue at column 23, parenthetical at 19, dialogue at 15, 28 wide; right column: cue at 55,
+  parenthetical at 51, dialogue at 47, 28 wide. The pair is kept on one page.
+- **Locked scene numbers** print as written (`4A`); otherwise scenes are numbered in order.
+- **Revisions:** a line changed in a revision gets `*` at column 80; a page holding revised lines
+  is that revision's colour in page preview, and its PDF header names the revision ("Blue
+  Revision").
+
+Not yet: widow and orphan control within action, locked pages, configurable element styles.

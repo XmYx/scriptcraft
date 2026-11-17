@@ -20,6 +20,8 @@ pub enum Role {
     SceneNumber,
     /// A line of the title page.
     TitlePage,
+    /// `*` in the right margin beside a revised line.
+    RevisionMark,
 }
 
 /// One line of text on a page.
@@ -45,6 +47,8 @@ pub struct Page {
     /// The page number printed at the top right (`2.`); none on the first page.
     pub header: Option<String>,
     pub lines: Vec<Line>,
+    /// The highest revision level of any line on the page (0 = unrevised): the page's colour.
+    pub revision: u8,
 }
 
 /// Where an element starts.
@@ -99,6 +103,32 @@ struct Block {
     lines: Vec<String>,
     /// For dialogue, lyrics and parentheticals: the speaker, for `(CONT'D)`.
     speaker: Option<String>,
+    /// A locked scene number on a heading.
+    scene_number: Option<String>,
+    revision: u8,
+    /// Dual dialogue: rows of cells laid out side by side; `lines` is unused.
+    cells: Vec<Vec<Cell>>,
+}
+
+/// One piece of text in a dual-dialogue row.
+#[derive(Clone, Debug)]
+struct Cell {
+    column: usize,
+    text: String,
+    kind: ElementKind,
+    element: usize,
+    line_in_element: usize,
+    revision: u8,
+}
+
+impl Block {
+    fn simple(element: usize, kind: ElementKind, format: Format, lines: Vec<String>) -> Block {
+        Block { element, kind, format, lines, speaker: None, scene_number: None, revision: 0, cells: Vec::new() }
+    }
+
+    fn rows(&self) -> usize {
+        if self.cells.is_empty() { self.lines.len() } else { self.cells.len() }
+    }
 }
 
 impl Block {
@@ -109,12 +139,12 @@ impl Block {
 
 /// Lay out a whole script.
 pub fn paginate(sp: &Screenplay, setup: &PageSetup) -> Layout {
-    let blocks = blocks(sp);
+    let blocks = blocks(sp, setup);
     let mut pager = Pager {
         rows: setup.paper.rows_per_page(),
         setup: *setup,
         pages: Vec::new(),
-        current: Page { number: 1, header: None, lines: Vec::new() },
+        current: Page { number: 1, header: None, lines: Vec::new(), revision: 0 },
         row: 0,
         starts: vec![None; sp.elements.len()],
         page_starts: Vec::new(),
@@ -132,27 +162,101 @@ pub fn paginate(sp: &Screenplay, setup: &PageSetup) -> Layout {
     Layout { paper: setup.paper, rows_per_page: setup.paper.rows_per_page(), title_page, pages, starts, page_starts }
 }
 
-fn blocks(sp: &Screenplay) -> Vec<Block> {
-    let mut out = Vec::new();
+fn blocks(sp: &Screenplay, setup: &PageSetup) -> Vec<Block> {
+    let mut out: Vec<Block> = Vec::new();
     let mut speaker: Option<String> = None;
-    for (element, e) in sp.elements.iter().enumerate() {
+    // The last character to speak in the current scene, for automatic (CONT'D).
+    let mut last_speaker: Option<String> = None;
+    // Index in `out` of the current speech's character block, while the speech continues.
+    let mut speech_start: Option<usize> = None;
+    let elements = &sp.elements;
+    let mut i = 0;
+    while let Some(e) = elements.get(i) {
+        let element = i;
+        i += 1;
         if e.kind == ElementKind::PageBreak {
             let format = Format { left: 0, width: 0, align: Align::Left, space_before: 0 };
-            out.push(Block { element, kind: e.kind, format, lines: Vec::new(), speaker: None });
+            out.push(Block::simple(element, e.kind, format, Vec::new()));
             speaker = None;
+            speech_start = None;
             continue;
         }
         let Some(format) = format_of(e.kind) else { continue };
-        match e.kind {
-            ElementKind::Character => speaker = Some(character_name(&e.text)),
-            k if k.is_speech() => {}
-            _ => speaker = None,
+        if e.kind == ElementKind::SceneHeading {
+            last_speaker = None;
         }
-        let speaker = if e.kind.is_speech() && e.kind != ElementKind::Character { speaker.clone() } else { None };
-        let lines = wrap(&e.display_text(), format.width);
-        out.push(Block { element, kind: e.kind, format, lines, speaker });
+        if e.kind == ElementKind::Character && e.dual && speech_start.is_some() {
+            // Dual dialogue: this speech goes beside the one before it.
+            let end = elements
+                .iter()
+                .skip(i)
+                .position(|n| !matches!(n.kind, ElementKind::Parenthetical | ElementKind::Dialogue | ElementKind::Lyric))
+                .map_or(elements.len(), |p| i + p);
+            let right: Vec<(usize, &scriptcraft_model::Element)> = (element..end).filter_map(|k| elements.get(k).map(|e| (k, e))).collect();
+            let start = speech_start.take().unwrap_or(out.len());
+            let left_elements: Vec<usize> = out.drain(start..).map(|b| b.element).collect();
+            let left: Vec<(usize, &scriptcraft_model::Element)> = left_elements.iter().filter_map(|&k| elements.get(k).map(|e| (k, e))).collect();
+            let cells = dual_rows(&left, &right);
+            let first = left.first().map_or(element, |(k, _)| *k);
+            let mut block = Block::simple(first, ElementKind::Character, Format { space_before: 1, ..format }, Vec::new());
+            block.cells = cells;
+            out.push(block);
+            last_speaker = right.first().map(|(_, e)| character_name(&e.text));
+            speaker = None;
+            i = end;
+            continue;
+        }
+        let mut text = e.display_text();
+        match e.kind {
+            ElementKind::Character => {
+                let name = character_name(&e.text);
+                if setup.auto_contd && last_speaker.as_deref() == Some(name.as_str()) && !text.contains("CONT'D") && !name.is_empty() {
+                    text.push_str(" (CONT'D)");
+                }
+                last_speaker = Some(name.clone());
+                speaker = Some(name);
+                speech_start = Some(out.len());
+            }
+            k if k.is_speech() => {}
+            _ => {
+                speaker = None;
+                speech_start = None;
+            }
+        }
+        let body_speaker = if e.kind.is_speech() && e.kind != ElementKind::Character { speaker.clone() } else { None };
+        let mut block = Block::simple(element, e.kind, format, wrap(&text, format.width));
+        block.speaker = body_speaker;
+        block.scene_number = e.scene_number.clone().filter(|_| e.kind == ElementKind::SceneHeading);
+        block.revision = e.revision;
+        out.push(block);
     }
     out
+}
+
+/// Columns of the two speeches of dual dialogue: (character, parenthetical, dialogue) start and
+/// width for the left and the right speech.
+const DUAL: [(usize, usize, usize, usize, usize); 2] = [(23, 19, 15, 22, 28), (55, 51, 47, 22, 28)];
+
+/// Rows of dual dialogue: the left and right speech wrapped to half-width columns, row by row.
+fn dual_rows(left: &[(usize, &scriptcraft_model::Element)], right: &[(usize, &scriptcraft_model::Element)]) -> Vec<Vec<Cell>> {
+    let side = |speech: &[(usize, &scriptcraft_model::Element)],
+                (char_col, paren_col, dia_col, paren_w, dia_w): (usize, usize, usize, usize, usize)| {
+        let mut rows: Vec<Cell> = Vec::new();
+        for (element, e) in speech {
+            let (column, width) = match e.kind {
+                ElementKind::Character => (char_col, 38),
+                ElementKind::Parenthetical => (paren_col, paren_w),
+                _ => (dia_col, dia_w),
+            };
+            for (line_in_element, text) in wrap(&e.display_text(), width).into_iter().enumerate() {
+                rows.push(Cell { column, text, kind: e.kind, element: *element, line_in_element, revision: e.revision });
+            }
+        }
+        rows
+    };
+    let (l, r) = (side(left, DUAL[0]), side(right, DUAL[1]));
+    let n = l.len().max(r.len());
+    (0..n).map(|k| l.get(k).into_iter().chain(r.get(k)).cloned().collect()).collect()
 }
 
 /// Rows that must fit on the same page after `block`, so it is not left alone at the bottom.
@@ -161,7 +265,7 @@ fn keep_with_next(block: &Block, next: Option<&Block>) -> usize {
     if next.kind == ElementKind::PageBreak {
         return 0;
     }
-    let n = next.lines.len();
+    let n = next.rows();
     let speech_room = if n <= 2 { n } else { 3 }; // two lines and (MORE)
     match block.kind {
         ElementKind::SceneHeading | ElementKind::Shot => next.format.space_before + n.min(2),
@@ -199,7 +303,7 @@ struct Pager {
 impl Pager {
     fn new_page(&mut self) {
         let number = self.current.number.saturating_add(1);
-        let finished = std::mem::replace(&mut self.current, Page { number, header: Some(format!("{number}.")), lines: Vec::new() });
+        let finished = std::mem::replace(&mut self.current, Page { number, header: Some(format!("{number}.")), lines: Vec::new(), revision: 0 });
         self.pages.push(finished);
         self.row = 0;
     }
@@ -211,7 +315,7 @@ impl Pager {
             }
             return;
         }
-        let n = b.lines.len();
+        let n = b.rows();
         let before = if self.current.lines.is_empty() { 0 } else { b.format.space_before };
         if self.row + before + n + keep <= self.rows {
             self.row += before;
@@ -220,7 +324,7 @@ impl Pager {
         }
         let speech = b.is_speech_body();
         let reserve = usize::from(speech);
-        let splittable = matches!(b.kind, ElementKind::Action | ElementKind::Dialogue | ElementKind::Lyric);
+        let splittable = b.cells.is_empty() && matches!(b.kind, ElementKind::Action | ElementKind::Dialogue | ElementKind::Lyric);
         let room = self.rows.saturating_sub(self.row + before + reserve);
         match splittable.then(|| choose_split(&b.lines, room)).flatten() {
             Some(k) => {
@@ -246,7 +350,7 @@ impl Pager {
     /// Place lines `start..` from the current row, breaking pages as needed (a block longer than
     /// a page is cut wherever the page ends).
     fn flow(&mut self, b: &Block, start: usize) {
-        let n = b.lines.len();
+        let n = b.rows();
         let reserve = usize::from(b.is_speech_body());
         let mut i = start;
         while i < n {
@@ -284,6 +388,10 @@ impl Pager {
     }
 
     fn emit(&mut self, b: &Block, from: usize, to: usize) {
+        if !b.cells.is_empty() {
+            self.emit_cells(b, from, to);
+            return;
+        }
         for (i, text) in b.lines.iter().enumerate().take(to).skip(from) {
             if self.current.lines.iter().all(|l| l.role == Role::Continued) {
                 self.page_starts.push(PageStart { page: self.current.number, element: b.element, line_in_element: i });
@@ -295,7 +403,8 @@ impl Pager {
                 if b.kind == ElementKind::SceneHeading {
                     self.scene += 1;
                     if self.setup.scene_numbers {
-                        self.scene_numbers(b.element);
+                        let number = b.scene_number.clone().unwrap_or_else(|| self.scene.to_string());
+                        self.scene_numbers(b.element, number);
                     }
                 }
             }
@@ -314,13 +423,57 @@ impl Pager {
                 element: Some(b.element),
                 line_in_element: i,
             });
+            self.mark_revision(b.revision, b.element);
             self.row += 1;
         }
     }
 
-    fn scene_numbers(&mut self, element: usize) {
-        let number = self.scene.to_string();
-        let (left, right) = (10usize.saturating_sub(number.len()), 77);
+    fn emit_cells(&mut self, b: &Block, from: usize, to: usize) {
+        for row in b.cells.iter().take(to).skip(from) {
+            if self.current.lines.is_empty()
+                && let Some(first) = row.first()
+            {
+                self.page_starts.push(PageStart { page: self.current.number, element: first.element, line_in_element: first.line_in_element });
+            }
+            let revision = row.iter().map(|c| c.revision).max().unwrap_or(0);
+            for cell in row {
+                if cell.line_in_element == 0
+                    && let Some(slot) = self.starts.get_mut(cell.element)
+                {
+                    *slot = Some(Position { page: self.current.number, row: self.row });
+                }
+                self.current.lines.push(Line {
+                    row: self.row,
+                    column: cell.column,
+                    text: cell.text.clone(),
+                    role: Role::Element(cell.kind),
+                    element: Some(cell.element),
+                    line_in_element: cell.line_in_element,
+                });
+            }
+            self.mark_revision(revision, b.element);
+            self.row += 1;
+        }
+    }
+
+    /// `*` in the right margin of a revised line, and the page takes the revision's colour.
+    fn mark_revision(&mut self, revision: u8, element: usize) {
+        if revision == 0 {
+            return;
+        }
+        self.current.revision = self.current.revision.max(revision);
+        self.current.lines.push(Line {
+            row: self.row,
+            column: 80,
+            text: "*".into(),
+            role: Role::RevisionMark,
+            element: Some(element),
+            line_in_element: 0,
+        });
+    }
+
+    fn scene_numbers(&mut self, element: usize, number: String) {
+        let (left, right) = (10usize.saturating_sub(number.chars().count()), 77);
         for column in [left, right] {
             self.current.lines.push(Line {
                 row: self.row,
@@ -361,7 +514,7 @@ fn title_page(tp: &TitlePage, rows: usize) -> Page {
     };
     bottom("Contact", 15, false);
     bottom("Draft date", 75, true);
-    Page { number: 0, header: None, lines }
+    Page { number: 0, header: None, lines, revision: 0 }
 }
 
 /// The layout as plain text: one string per page line, pages separated by a form feed. Used by
@@ -400,7 +553,7 @@ mod tests {
     use scriptcraft_model::Element;
 
     fn sp(elements: Vec<Element>) -> Screenplay {
-        Screenplay { title_page: TitlePage::default(), elements }
+        Screenplay { title_page: TitlePage::default(), elements, ..Screenplay::default() }
     }
 
     #[test]
@@ -481,5 +634,89 @@ mod tests {
             paginate(&sp(vec![Element::new(ElementKind::SceneHeading, "INT. A - DAY")]), &PageSetup { scene_numbers: true, ..PageSetup::default() });
         let numbers: Vec<usize> = layout.pages[0].lines.iter().filter(|l| l.role == Role::SceneNumber).map(|l| l.column).collect();
         assert_eq!(numbers, [9, 77]);
+    }
+}
+
+#[cfg(test)]
+mod more_tests {
+    use super::*;
+    use scriptcraft_model::Element;
+
+    fn sp(elements: Vec<Element>) -> Screenplay {
+        Screenplay { elements, ..Screenplay::default() }
+    }
+
+    fn texts(layout: &Layout) -> Vec<(usize, usize, String)> {
+        layout.pages.iter().flat_map(|p| p.lines.iter().map(|l| (l.row, l.column, l.text.clone()))).collect()
+    }
+
+    #[test]
+    fn locked_scene_numbers_are_printed() {
+        let setup = PageSetup { scene_numbers: true, ..PageSetup::default() };
+        let layout =
+            paginate(&sp(vec![Element::numbered_heading("INT. A - DAY", "4A"), Element::new(ElementKind::SceneHeading, "INT. B - DAY")]), &setup);
+        let numbers: Vec<String> = layout.pages[0].lines.iter().filter(|l| l.role == Role::SceneNumber).map(|l| l.text.clone()).collect();
+        assert_eq!(numbers, ["4A", "4A", "2", "2"]);
+    }
+
+    #[test]
+    fn same_speaker_again_gets_contd() {
+        let elements = vec![
+            Element::new(ElementKind::SceneHeading, "INT. A - DAY"),
+            Element::new(ElementKind::Character, "MAYA"),
+            Element::new(ElementKind::Dialogue, "One."),
+            Element::new(ElementKind::Action, "She waits."),
+            Element::new(ElementKind::Character, "Maya"),
+            Element::new(ElementKind::Dialogue, "Two."),
+            Element::new(ElementKind::Character, "MAYA (CONT'D)"),
+            Element::new(ElementKind::Dialogue, "Three."),
+            Element::new(ElementKind::SceneHeading, "INT. B - DAY"),
+            Element::new(ElementKind::Character, "MAYA"),
+            Element::new(ElementKind::Dialogue, "Four."),
+        ];
+        let layout = paginate(&sp(elements.clone()), &PageSetup::default());
+        let cues: Vec<String> =
+            layout.pages[0].lines.iter().filter(|l| l.role == Role::Element(ElementKind::Character)).map(|l| l.text.clone()).collect();
+        assert_eq!(cues, ["MAYA", "MAYA (CONT'D)", "MAYA (CONT'D)", "MAYA"]);
+        let off = paginate(&sp(elements), &PageSetup { auto_contd: false, ..PageSetup::default() });
+        let cues: Vec<String> =
+            off.pages[0].lines.iter().filter(|l| l.role == Role::Element(ElementKind::Character)).map(|l| l.text.clone()).collect();
+        assert_eq!(cues, ["MAYA", "MAYA", "MAYA (CONT'D)", "MAYA"]);
+    }
+
+    #[test]
+    fn dual_dialogue_sits_side_by_side() {
+        let mut tomas = Element::new(ElementKind::Character, "TOMAS");
+        tomas.dual = true;
+        let elements = vec![
+            Element::new(ElementKind::Character, "ARI"),
+            Element::new(ElementKind::Dialogue, "There! Look, there it is again, the light."),
+            tomas,
+            Element::new(ElementKind::Parenthetical, "(grinning)"),
+            Element::new(ElementKind::Dialogue, "Told you."),
+            Element::new(ElementKind::Action, "After."),
+        ];
+        let layout = paginate(&sp(elements), &PageSetup::default());
+        let t = texts(&layout);
+        assert!(t.contains(&(0, 23, "ARI".into())));
+        assert!(t.contains(&(0, 55, "TOMAS".into())));
+        assert!(t.contains(&(1, 15, "There! Look, there it is again, the".into())) || t.iter().any(|(r, c, _)| *r == 1 && *c == 15));
+        assert!(t.contains(&(1, 51, "(grinning)".into())));
+        assert!(t.contains(&(2, 47, "Told you.".into())));
+        // Every element starts somewhere, and the action follows the taller column.
+        assert!(layout.starts.iter().all(Option::is_some));
+        assert_eq!(layout.starts[5].map(|p| p.row), Some(4));
+        assert!(t.iter().all(|(_, c, text)| c + text.chars().count() <= 75));
+    }
+
+    #[test]
+    fn revised_lines_get_marks_and_colour_the_page() {
+        let mut e = Element::new(ElementKind::Action, "Changed.");
+        e.revision = 2;
+        let layout = paginate(&sp(vec![Element::new(ElementKind::Action, "Same."), e]), &PageSetup::default());
+        let marks: Vec<&Line> = layout.pages[0].lines.iter().filter(|l| l.role == Role::RevisionMark).collect();
+        assert_eq!(marks.len(), 1);
+        assert_eq!((marks[0].row, marks[0].column), (2, 80));
+        assert_eq!(layout.pages[0].revision, 2);
     }
 }

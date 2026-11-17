@@ -13,6 +13,7 @@ workspace = true
 
 [dependencies]
 craft-fonts-build = { workspace = true }
+epaint_default_fonts = { workspace = true }
 
 [build-dependencies]
 craft-fonts-build = { workspace = true }

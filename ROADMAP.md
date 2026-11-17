@@ -11,35 +11,28 @@ the current focus in [docs/roadmap.md](docs/roadmap.md).
 
 ## Where it stands
 
+**Parity: 81% weighted** (P0 92%, P1 82%, P2 47%; it was 48% at the skeleton), measured against
+the industry's screenwriting apps in [docs/target-app-parity.md](docs/target-app-parity.md).
+
 | Area | State |
 |---|---|
-| Document model (all screenplay elements, title page) | done, tested |
-| Fountain open/save, lossless round trip | done, tested (fixtures, mutation fuzz) |
-| FDX import | done for elements, scene numbers, dual dialogue, title page; styles and notes dropped |
-| Formatting and pagination (US Letter, A4, MORE/CONT'D, keep-with-next) | done, tested |
-| Editor: Enter/Tab element flow, auto-complete, navigator, page preview | working; caret and keyboard model need hands-on polish |
-| Scene list for BoardCraft (JSON, stable scene ids) | done, tested, [documented](docs/interop.md) |
-| Command-line tool | scenes, convert, pages, stats, commands |
-| PDF export | **not started** (planned on craft-libs `craft-pdf`) |
-| FDX export | **not started** |
-| Accessibility | named script lines, live element announcements, page-preview text nodes; 7 kittest keyboard tests with the accessibility check on |
-| Localization | craft-i18n wired, every interface string translatable, 169 source texts listed; no ScriptCraft catalog in craft-i18n yet ([details](docs/localization-parity.md)) |
+| Model, Fountain (lossless), pagination (US Letter, A4, MORE/CONT'D, automatic CONT'D, dual dialogue) | done, tested |
+| PDF export (exact pages, font embedded) | done, tested |
+| FDX | open and save elements, scene numbers, dual dialogue, title page; no styled text or notes yet |
+| Editor: Enter/Tab flow, auto-complete, find and replace, spell-check, navigator, index cards, page preview | done; no selection across elements yet |
+| Production: locked scene numbers with A/B, revision marks and colours | done; no locked pages |
+| Reports and statistics | done |
+| Safety: autosave with recovery, backups, atomic saves | done |
+| Focus mode, typewriter scrolling, dark page | done |
+| Scene list for BoardCraft (JSON, stable scene ids) | done, [documented](docs/interop.md) |
+| Accessibility | named script lines and cards, live regions, page text nodes; 16 kittest keyboard tests with the accessibility check |
+| Localization | craft-i18n wired, every interface string translatable; no ScriptCraft catalog in craft-i18n yet ([details](docs/localization-parity.md)) |
 | Packaging | `packaging/env.sh`, Linux nfpm config and desktop file, hicolor icons; release through craft-common-actions; launcher draft in [docs/launcher-entry.toml](docs/launcher-entry.toml) |
 
-## Alpha gate
+## Next
 
-A writer can draft, revise and deliver a short script without leaving ScriptCraft:
-
-1. Type a script from scratch with the keyboard only (done).
-2. Open a script from FDX or Fountain and save it as Fountain without losing anything (done for
-   what is imported).
-3. **Export PDF** with correct pagination and an embedded font.
-4. **Save FDX** for exchange with other screenwriting software.
-5. Every control named and reachable in the accessibility tree, with kittest coverage.
-
-## Next steps
-
-See [docs/gaps.md](docs/gaps.md).
+The ranked list is [docs/gaps.md](docs/gaps.md); first: selection and copy/paste across elements,
+title page layout, FDX fidelity, styled text. Detail: [docs/roadmap.md](docs/roadmap.md).
 
 ## Progress log
 

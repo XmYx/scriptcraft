@@ -1,40 +1,42 @@
 # Target-app parity
 
-The reference application for ScriptCraft is **Final Draft** (the desktop screenwriting
-application whose FDX format ScriptCraft opens). This is the only document that names it; feature
-labels use our own words ([feature-names.md](feature-names.md)). ScriptCraft is not affiliated
-with or endorsed by its maker.
+ScriptCraft is measured against the screenwriting applications working writers use most:
+**Final Draft** (the reference; its FDX format is the industry's exchange file), and **WriterDuet**,
+**Fade In**, **Highland** and **Celtx**. This is the only document that names them; feature labels
+use our own words ([feature-names.md](feature-names.md)). ScriptCraft is not affiliated with or
+endorsed by any of their makers. Features were learned from their public documentation and
+observed behaviour only (clean room, AGENTS.md §2).
 
-Parity is judged by observed behaviour and public descriptions only (clean room, AGENTS.md §2).
-States: **done** (works and is tested), **partial**, **stub** (visible, not working), **missing**.
-Nothing here is measured by a script yet; it is an honest estimate from the code and tests.
+The feature-by-feature table, with priorities, states and the ranked open list, is
+[parity-checklist.md](parity-checklist.md); `cargo xtask parity` scores it (P0 = missed on day one,
+weight 3; P1 = missed within a project, weight 2; P2 = nice to have, weight 1; done 1, partial ½).
 
-| Area | Reference app | ScriptCraft | State |
-|---|---|---|---|
-| Elements: scene heading, action, character, parenthetical, dialogue, transition, shot | yes | yes | done |
-| General, cast list, act breaks | yes | read as action / centered on import | partial |
-| Enter/Tab element flow | yes | own documented rules ([keyboard.md](keyboard.md)) | done |
-| SmartType-style completion (characters, places, times, transitions) | yes | yes | done (not configurable) |
-| Title page | yes | key/value dialog, printed layout | partial (no free layout) |
-| Pagination, (MORE)/(CONT'D), keep-with-next | yes | yes | done |
-| Page sizes | Letter, A4, custom | Letter, A4 | partial |
-| Dual dialogue | side by side | stored, laid out one after the other | partial |
-| Scene numbers in margins, locked numbers | yes | numbers shown, locked numbers kept from files; no A/B numbering of new scenes | partial |
-| Navigator / outline | yes | scene list with pages and eighths | partial |
-| Index cards / beat board | yes | none (planned with BoardCraft) | missing |
-| Revisions, colored pages, locked pages | yes | none | missing |
-| Script notes | yes | Fountain notes kept and shown; FDX notes dropped | partial |
-| Reports (scene, character, location) | yes | CLI `stats` only | partial |
-| Spelling | yes | none (craft-proof planned) | missing |
-| Find and replace | yes | none | missing |
-| Native file format | FDX | Fountain (open, save, lossless) | done |
-| FDX | open, save | open | partial |
-| PDF export | yes | menu entry, disabled | stub |
-| Fountain | import/export | native | done |
-| Plain text export | yes | yes | done |
-| Collaboration | yes | none | missing |
-| Production tools (breakdown, scheduling hand-off) | add-ons | scene list JSON for BoardCraft | partial |
-| Accessibility (screen reader names, keyboard) | platform | AccessKit names, live region, kittest tests | partial |
-| Localization | several languages | craft-i18n wired, no catalogs yet | partial |
+## Score
 
-See [gaps.md](gaps.md) for the ranked work and [roadmap.md](roadmap.md) for the current focus.
+| Measured | Weighted | P0 | P1 | P2 |
+|---|---:|---:|---:|---:|
+| 2026-11-17, skeleton (`b1cf89b`) | 48% | 64% | 32% | 26% |
+| 2026-11-17, polish pass | **81%** | **92%** | **82%** | **47%** |
+
+## Where ScriptCraft stands against each reference
+
+| Area | What the references offer | ScriptCraft |
+|---|---|---|
+| Formatting and pagination | All five paginate to the spec-script standard; (MORE)/(CONT'D), automatic (CONT'D), dual dialogue side by side | Same rules, tested; dual dialogue side by side in print and preview (the editor lists both speeches in order) |
+| Scene numbers and production | Locked numbering with A/B scenes (all five); locked pages and revision sets with coloured pages (the reference, Fade In, WriterDuet) | Locked numbering with A/B scenes; revision marks and colours; **no locked A-pages** |
+| FDX | Native in the reference; import and export in the other four | Opens and saves FDX elements, numbers, dual dialogue and the title page; **no styled text, script notes or revision data in FDX yet** |
+| PDF | All five | Exact pages from the layout, font embedded |
+| Fountain | Native in Highland; import/export in Fade In, WriterDuet and the reference | Native, lossless |
+| Writing aids | Auto-complete of names, places, times and transitions (all five); spell-check (all) | Both; spell-check through craft-proof |
+| Find and replace | All five | Yes, with match case |
+| Structure | Index cards / boards (the reference, WriterDuet, Celtx); outline navigators (all) | Scene navigator; index cards with synopses and keyboard reordering; **no outline of sections** |
+| Notes | Anchored comments and script notes (all) | Fountain notes as their own lines; **no anchored comments** |
+| Reports and statistics | Scene, character and location reports (the reference, Fade In, Celtx) | Statistics, character and location reports; CLI tables |
+| Safety | Autosave and backups (all desktop apps) | Autosave every minute with recovery on open; backup of the previous version on save |
+| Environment | Focus / distraction-free and typewriter modes, dark themes (Highland, Fade In, the reference) | Focus mode, typewriter scrolling, dark page |
+| Collaboration | Real-time co-writing (WriterDuet, the reference's cloud, Celtx) | **None** |
+| Platforms | Desktop, web or mobile depending on the app | Desktop (Linux, macOS, Windows); **no web or mobile build yet** |
+| Accessibility | Varies; rarely documented | AccessKit names, live regions, 16 kittest keyboard tests with the accessibility check |
+| Languages | Several interface languages | craft-i18n wired; **no ScriptCraft catalogs yet** |
+
+The ranked remaining work is [gaps.md](gaps.md); the current focus is [roadmap.md](roadmap.md).

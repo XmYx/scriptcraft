@@ -21,8 +21,14 @@ list (author, source, license) is in ATTRIBUTION.md.
 
 Code dependencies
 
-- craft-xml, craft-fonts-build and craft-i18n come from storytold/craft-libs (same owner,
-  MIT OR Apache-2.0). Builds made with craft-i18n (CRAFT_I18N_DIR) embed its translation
+- craft-xml, craft-fonts-build, craft-i18n, craft-pdf and craft-proof come from
+  storytold/craft-libs (same owner, MIT OR Apache-2.0).
+- Krilla 0.8.2 (https://github.com/LaurenzV/krilla) is used through craft-pdf under
+  MIT OR Apache-2.0; craft-libs vendors that version with unwind recovery. Its bundled Compact ICC
+  Profiles by Clinton Ingram (https://github.com/saucecontrol/Compact-ICC-Profiles) are CC0-1.0;
+  the licence texts are retained in craft-libs.
+- PDFs exported without craft-fonts embed Hack (MIT and Bitstream Vera licences), the monospace
+  face egui ships; with craft-fonts they embed Liberation Mono (OFL-1.1). Builds made with craft-i18n (CRAFT_I18N_DIR) embed its translation
   catalogs (same owner).
 - Three dependencies offer a choice of licences; ScriptCraft uses them under the permissive one:
   r-efi (MIT OR Apache-2.0 OR LGPL-2.1-or-later: MIT), self_cell (Apache-2.0 OR GPL-2.0-only:

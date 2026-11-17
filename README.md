@@ -36,39 +36,51 @@
 
 ## What works today
 
+Measured against the industry's screenwriting apps: **81% weighted parity**
+([details](docs/target-app-parity.md)).
+
 - **Screenplay elements:** scene heading, action, character, parenthetical, dialogue, transition,
   shot, centered text, lyrics, plus outline sections, synopses, notes and omitted text that are
   kept but not printed; a title page.
 - **Typing:** Enter starts the element that usually follows (character → dialogue, dialogue →
   action, transition → scene heading…); Tab and Shift+Tab change the element; Backspace at the
-  start of an element joins it to the one above; ↑/↓ move between elements. Headings, character
-  cues and transitions are capitalised as you type. [All keys](docs/keyboard.md).
-- **Auto-complete:** character names (most frequent first), scene heading prefixes, places
-  already used and times of day, and transitions.
-- **Formatting and pagination:** conventional spec-script indents, 54 lines per page on US Letter
-  and 58 on A4, scene headings and character cues kept with what follows, action and dialogue
-  split across pages with `(MORE)` and `(CONT'D)`, page numbers, optional scene numbers in both
-  margins. Page boundaries show as rules in the editor; **Page Preview** shows the exact pages.
-  [Rules and measurements](docs/formatting.md).
-- **Scene navigator:** every scene with its number, page and length in eighths; click to jump.
-  The cast list sits beneath.
-- **Files:** open and save Fountain with a lossless round trip for everything ScriptCraft reads
-  ([details](docs/fountain.md)); open FDX files (elements, scene numbers, dual dialogue, title
-  page); saves are atomic (a failed save never damages the old file); drop a file on the window to
-  open it.
-- **For BoardCraft:** *File ▸ Export Scene List for Storyboards* writes a versioned JSON scene list
-  (numbers, headings split into interior/exterior, location and time, pages, eighths, characters,
-  action text, beats). *Script ▸ Add Stable Scene IDs* tags scenes so storyboards can be updated
-  on re-import. [The contract](docs/interop.md).
-- **Plain-text export** of the paginated script.
+  start of an element joins it to the one above. Headings, cues and transitions are capitalised as
+  you type. [All keys](docs/keyboard.md).
+- **Auto-complete** of character names, scene heading prefixes, places and times of day, and
+  transitions. **Find and replace** (Ctrl+F, Ctrl+H, F3). **Spell-check** as you type, with F7 for
+  the next misspelling and suggestions (craft-libs craft-proof).
+- **Formatting and pagination:** spec-script indents, 54 lines per page on US Letter and 58 on A4,
+  headings and cues kept with what follows, (MORE) and (CONT'D) across pages, automatic (CONT'D)
+  for the same speaker, dual dialogue side by side, scene numbers in both margins.
+  [Rules](docs/formatting.md).
+- **PDF export** with exactly the pages the preview shows, font embedded.
+- **Structure:** a scene navigator, and **index cards** with synopses on the cards; move scenes with
+  Alt+arrows.
+- **Production:** lock scene numbers (new scenes become 4A, 4B), **revision mode** with margin marks
+  and coloured pages (Blue, Pink, Yellow…), kept in the Fountain file.
+- **Reports:** statistics, characters (speeches, words, scenes) and locations.
+- **Files:** Fountain open and save (lossless), FDX open and save, plain text, the scene list for
+  BoardCraft. Saves are atomic, the previous version is kept as a backup, and changes are
+  autosaved every minute and offered back after a crash.
+- **Focus mode** (F11), typewriter scrolling and a dark page.
+- **Accessible and translatable:** every control and script line has an accessible name, changes
+  are announced, the page preview publishes its text; keyboard flows are tested with
+  egui_kittest's accessibility check. Interface text goes through craft-i18n.
 
-- **Accessible and translatable:** every control and script line has an accessible name, element
-  changes are announced, and the page preview publishes its text; keyboard flows are tested with
-  egui_kittest's accessibility check. Interface text goes through craft-i18n (catalogs from
-  `CRAFT_I18N_DIR`; View ▸ Language).
+Not yet: selection and copy/paste across elements, styled text, anchored comments, locked pages,
+translated catalogs. See the [roadmap](ROADMAP.md).
 
-Not yet: PDF export, FDX saving, revisions and colored pages, script notes, reports, dual dialogue
-side by side, translated catalogs. See the [roadmap](ROADMAP.md).
+<p align="center">
+  <img alt="Index cards: one card per scene with number, heading, synopsis, opening action, length and cast" src="docs/images/index-cards.png" width="900">
+</p>
+
+<p align="center">
+  <img alt="Revision mode: revised lines marked with an asterisk in the margin and the page tinted blue in page preview" src="docs/images/revision-mode.png" width="900">
+</p>
+
+<p align="center">
+  <img alt="A page of the exported PDF: dual dialogue side by side, scene numbers in both margins" src="docs/images/pdf-export.png" width="600">
+</p>
 
 <p align="center">
   <img alt="Page preview: the sample's title page, set in a fixed-pitch font on US Letter" src="docs/images/page-preview.png" width="700">
@@ -108,7 +120,10 @@ Every menu action is a command with a stable id (`file.save`, `element.character
 scriptcraft-cli scenes script.fountain --out script.scenes.json   # scene list for BoardCraft
 scriptcraft-cli convert draft.fdx draft.fountain                  # FDX → Fountain
 scriptcraft-cli pages script.fountain --paper a4 --scene-numbers  # paginated plain text
-scriptcraft-cli stats script.fountain                             # pages, scenes, speeches
+scriptcraft-cli pdf script.fountain script.pdf --scene-numbers   # PDF
+scriptcraft-cli fdx script.fountain script.fdx                    # FDX
+scriptcraft-cli stats script.fountain                             # pages, scenes, words
+scriptcraft-cli report script.fountain                            # characters and locations
 scriptcraft-cli commands                                          # command ids and labels
 ```
 
@@ -118,10 +133,11 @@ scriptcraft-cli commands                                          # command ids 
 |---|---|---|
 | `scriptcraft-model` | Screenplay, elements, title page | no |
 | `scriptcraft-fountain` | Fountain reader and writer | no |
-| `scriptcraft-fdx` | FDX import (via craft-libs `craft-xml`) | no |
+| `scriptcraft-fdx` | FDX import and export (via craft-libs `craft-xml`) | no |
 | `scriptcraft-layout` | Formatting, word wrap, pagination, plain-text pages | no |
 | `scriptcraft-interchange` | Scene list for BoardCraft (JSON) | no |
-| `scriptcraft-engine` | Document, undo, Enter/Tab rules, auto-complete, commands, file I/O | no |
+| `scriptcraft-pdf` | PDF export (via craft-libs `craft-pdf`) | no |
+| `scriptcraft-engine` | Document, undo, Enter/Tab rules, auto-complete, find, spelling, numbering, revisions, reports, autosave, commands, file I/O | no |
 | `scriptcraft-fonts` | Liberation Mono from craft-fonts (`CRAFT_FONTS_DIR`) | no |
 | `scriptcraft-ui-egui` | Editor, page preview, navigator, dialogs | egui |
 | `apps/scriptcraft`, `apps/scriptcraft-cli` | Desktop app and command-line tool | |
@@ -130,7 +146,8 @@ More in [docs/architecture.md](docs/architecture.md).
 
 ## Roadmap
 
-ScriptCraft is a **skeleton**: the core works end to end and is tested, the shell is minimal.
+ScriptCraft is heading for **alpha**: the core and the main writing, revising and delivery flows
+work and are tested.
 [ROADMAP.md](ROADMAP.md) has the stage and next steps; [docs/gaps.md](docs/gaps.md) the ranked
 work list.
 

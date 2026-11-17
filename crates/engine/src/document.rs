@@ -23,6 +23,7 @@ pub struct Document {
     typing_in: Option<usize>,
     generation: u64,
     layout: Option<(u64, PageSetup, Layout)>,
+    autosaved: Option<u64>,
 }
 
 impl Default for Document {
@@ -52,6 +53,7 @@ impl Document {
             typing_in: None,
             generation: 0,
             layout: None,
+            autosaved: None,
         }
     }
 
@@ -71,6 +73,21 @@ impl Document {
         self.dirty
     }
 
+    /// Write the autosave when the script changed since the last one. Returns whether it wrote.
+    pub fn autosave(&mut self) -> Result<bool, EngineError> {
+        if !self.dirty || self.autosaved == Some(self.generation) {
+            return Ok(false);
+        }
+        io::autosave(self.path.as_deref(), &self.screenplay)?;
+        self.autosaved = Some(self.generation);
+        Ok(true)
+    }
+
+    /// Replace the script with a recovered autosave (one undo step; the document stays dirty).
+    pub fn recover(&mut self, recovered: Screenplay) {
+        self.replace(recovered);
+    }
+
     /// The name for the window title: the file name, else the script's title; `None` for an
     /// untitled script (the interface shows its own word for that).
     pub fn name(&self) -> Option<String> {
@@ -86,6 +103,9 @@ impl Document {
         self.push_undo();
         self.typing_in = None;
         let r = change(&mut self.screenplay);
+        if let Some(before) = self.undo.last() {
+            crate::revisions::mark_changes(before, &mut self.screenplay);
+        }
         self.changed();
         r
     }
@@ -99,8 +119,12 @@ impl Document {
             self.push_undo();
             self.typing_in = Some(index);
         }
+        let revisions = self.screenplay.revisions;
         if let Some(e) = self.screenplay.elements.get_mut(index) {
             e.text = text;
+            if revisions.tracking && revisions.level > 0 {
+                e.revision = revisions.level;
+            }
         }
         self.changed();
     }

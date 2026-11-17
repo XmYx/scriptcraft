@@ -75,9 +75,22 @@ impl Paper {
 }
 
 /// How to lay out a script.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PageSetup {
     pub paper: Paper,
     /// Print scene numbers in both margins of each scene heading.
     pub scene_numbers: bool,
+    /// Add `(CONT'D)` to a character cue when the same character spoke last in the scene.
+    #[serde(default = "yes")]
+    pub auto_contd: bool,
+}
+
+fn yes() -> bool {
+    true
+}
+
+impl Default for PageSetup {
+    fn default() -> Self {
+        PageSetup { paper: Paper::UsLetter, scene_numbers: false, auto_contd: true }
+    }
 }

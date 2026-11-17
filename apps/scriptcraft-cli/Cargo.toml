@@ -16,3 +16,5 @@ scriptcraft-fountain = { workspace = true }
 scriptcraft-layout = { workspace = true }
 scriptcraft-engine = { workspace = true }
 scriptcraft-interchange = { workspace = true }
+scriptcraft-pdf = { workspace = true }
+scriptcraft-fonts = { workspace = true }

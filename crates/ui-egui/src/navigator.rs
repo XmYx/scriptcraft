@@ -52,7 +52,7 @@ pub fn show(app: &mut ScriptApp, ui: &mut Ui) {
     });
     if let Some(element) = go_to {
         app.jump = Some(element);
-        app.page_preview = false;
+        app.view = crate::app::View::Draft;
     }
 }
 

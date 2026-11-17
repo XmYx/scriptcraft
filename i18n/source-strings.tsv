@@ -7,8 +7,14 @@
 	Accept the suggestion (Esc hides the list)
 	Action
 	Add Stable Scene IDs
+	Add Word to Dictionary
+	Added “{word}” to the dictionary
 	All files
+	Alt+↑ / Alt+↓
+	Arrow keys move between cards · Enter opens the scene · Alt+arrows move it
 	Author
+	Automatic (CONT'D)
+	Autosave failed: {reason}
 	Backspace at the start
 	Build {sha} ({date})
 	Cancel
@@ -17,20 +23,31 @@
 	Change the element: action → character → transition → scene heading → shot; dialogue ⇄ parenthetical
 	Character
 	Characters
+	Check Spelling as You Type
+	Clear Revision Marks
+	Close
 	Cmd in place of Ctrl
 	Contact
 	Could not read {path}: {reason}
 	Could not save {path}: {reason}
+	Could not write the PDF: {reason}
 	Could not write the scene list: {reason}
 	Credit
 	Ctrl+1 … Ctrl+7
 	Ctrl+= / Ctrl+-
+	Ctrl+F / Ctrl+H
 	Ctrl+N / Ctrl+O
+	Ctrl+P
 	Ctrl+S / Ctrl+Shift+S
+	Ctrl+Shift+I
 	Ctrl+Shift+P
 	Ctrl+Z / Ctrl+Shift+Z
+	Dark Page
+	Day scenes
 	Dialogue
+	Don't Recover
 	Don't Save
+	Draft
 	Draft date
 	Edit
 	Element
@@ -40,26 +57,68 @@
 	Enter or Tab in a suggestion list
 	Enter or Tab to accept · Esc to hide
 	Every scene already has a stable ID
-	Export PDF… (planned)
+	Export FDX…
+	Export PDF
+	Export PDF…
 	Export Scene List for Storyboards…
 	Export as Plain Text…
 	Exported the scene list to {path}
 	Exported {path}
+	Exterior scenes
+	F11
+	F3 / Shift+F3
+	F7
 	File
+	Find / find and replace
+	Find Next
+	Find Previous
+	Find and Replace…
+	Find:
+	Find…
+	First page
+	Focus Mode
+	Focus mode (Esc leaves it)
 	Format
 	Help
+	Index Cards
+	Index cards (arrows move, Enter opens, Alt+arrows move the scene)
+	Int./Ext.
+	Interior scenes
 	Join with the element above
 	Keyboard Shortcuts
 	Language
+	Length (eighths)
 	Licensed under MIT OR Apache-2.0.
+	Location
+	Locations
+	Lock Scene Numbers
 	Lyric
+	Mark Revisions
+	Marking revisions
+	Match case
+	Match {n} of {total}
+	Move Scene Earlier
+	Move Scene Later
+	Move the scene earlier / later
 	Move to the element above / below
+	Moved the scene to position {n}
+	Name
 	Navigator
 	New
 	New / open (Fountain or FDX)
 	New line inside the element
 	New script
+	Next
+	Next / previous match
+	Next Misspelling
+	Next misspelled word, with suggestions
+	Night scenes
+	No matches
+	No misspelled words
 	No scene headings yet. Start one with INT. or EXT.
+	Not in the dictionary: “{word}”
+	Not in the dictionary: “{word}”. Suggestions: {list}
+	Not marking revisions
 	Note
 	Notes
 	Nothing to redo
@@ -79,11 +138,23 @@
 	Page preview
 	Page {page}
 	Page {page} of {pages}
+	Pages
 	Paper
 	Paper:
 	Parenthetical
+	Previous
+	Production
 	Quit
+	Recover
+	Recover unsaved changes?
+	Recovered the unsaved changes; save to keep them
 	Redo
+	Replace
+	Replace All
+	Replace with:
+	Replace…
+	Reports
+	Reports…
 	Save
 	Save / save as Fountain
 	Save As…
@@ -96,6 +167,8 @@
 	Scene Numbers
 	Scene heading, action, character, parenthetical, dialogue, transition, shot
 	Scene list (JSON)
+	Scene numbers unlocked
+	Scene {number}: {heading}
 	Scene {scene} of {scenes}
 	Scenes
 	Screenplays (Fountain, FDX)
@@ -103,13 +176,20 @@
 	Script
 	Script font: Liberation Mono (SIL Open Font License 1.1), from craft-fonts.
 	Script font: egui's built-in monospace face (build with CRAFT_FONTS_DIR for Liberation Mono).
+	ScriptCraft kept changes to “{name}” that were not saved when it last closed.
 	Section
 	Shift+Enter
 	Shift+Tab
 	Shot
 	Source
 	Source code
+	Speeches
+	Start Next Revision
+	Start Next Revision ({colour})
+	Started the {colour} revision; changes are marked
+	Statistics
 	Synopsis
+	Synopsis of scene {number}
 	Tab
 	Text
 	The kind of the element the caret is in (Tab changes it)
@@ -120,13 +200,18 @@
 	Title Page…
 	Title page
 	Transition
+	Typewriter Scrolling
 	US Letter
 	Undo
 	Undo / redo
+	Unlock Scene Numbers
 	Unsaved changes
 	Untitled
+	Use Next Misspelling (F7) to choose a word first
 	Version {version}
 	View
+	Words
+	Words of dialogue
 	Zoom In
 	Zoom Out
 	Zoom in / out
@@ -135,12 +220,22 @@
 	omitted
 	section
 	synopsis
+	{colour} Revision
+	{colour} revision
+	{colour} revision, marking changes
 	{kind} {number}
 	{path} is larger than 64 MiB and was not opened
 	{path} is not a readable FDX file: {reason}
 	“{name}” has changes that are not saved.
 	↑ / ↓ at the start / end
+@id	edit.add_to_dictionary
+@id	edit.check_spelling
+@id	edit.find
+@id	edit.find_next
+@id	edit.find_previous
+@id	edit.next_misspelling
 @id	edit.redo
+@id	edit.replace
 @id	edit.undo
 @id	element.action
 @id	element.character
@@ -149,6 +244,8 @@
 @id	element.scene_heading
 @id	element.shot
 @id	element.transition
+@id	file.export_fdx
+@id	file.export_pdf
 @id	file.export_scene_list
 @id	file.export_text
 @id	file.new
@@ -157,17 +254,33 @@
 @id	file.quit
 @id	file.save
 @id	file.save_as
+@id	format.auto_contd
 @id	format.paper.a4
 @id	format.paper.us_letter
 @id	format.scene_numbers
 @id	help.about
 @id	help.keyboard
+@id	production.clear_revision_marks
+@id	production.lock_scene_numbers
+@id	production.next_revision
+@id	production.track_revisions
+@id	production.unlock_scene_numbers
 @id	script.add_scene_ids
+@id	script.move_scene_down
+@id	script.move_scene_up
+@id	script.reports
 @id	script.title_page
+@id	view.dark_paper
+@id	view.focus_mode
+@id	view.index_cards
 @id	view.navigator
 @id	view.page_preview
+@id	view.typewriter
 @id	view.zoom_in
 @id	view.zoom_out
 @plural	Added a stable ID to {n} scene|Added stable IDs to {n} scenes
+@plural	Cleared {n} revision mark|Cleared {n} revision marks
+@plural	Locked scene numbers; numbered {n} scene|Locked scene numbers; numbered {n} scenes
+@plural	Replaced {n} match|Replaced {n} matches
 @plural	{n} page|{n} pages
 @plural	{n} scene|{n} scenes

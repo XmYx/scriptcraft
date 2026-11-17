@@ -149,6 +149,10 @@ pub struct Element {
     /// On a section: its depth, 1 for the outermost.
     #[serde(default, skip_serializing_if = "is_zero")]
     pub level: u8,
+    /// The revision this element was last changed in (1 = the first revision); 0 when it is
+    /// unrevised. Printed as a mark in the right margin.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub revision: u8,
 }
 
 fn is_false(b: &bool) -> bool {
@@ -163,7 +167,7 @@ impl Element {
     /// A plain element of this kind.
     pub fn new(kind: ElementKind, text: impl Into<String>) -> Element {
         let level = if kind == ElementKind::Section { 1 } else { 0 };
-        Element { kind, text: text.into(), scene_number: None, dual: false, level }
+        Element { kind, text: text.into(), scene_number: None, dual: false, level, revision: 0 }
     }
 
     /// A scene heading with a locked scene number.
@@ -253,11 +257,33 @@ impl TitlePage {
     }
 }
 
+/// The revision colours in the order productions use them, after the white first draft.
+pub const REVISION_COLOURS: [&str; 8] = ["Blue", "Pink", "Yellow", "Green", "Goldenrod", "Buff", "Salmon", "Cherry"];
+
+/// The colour name of revision `level` (1 = Blue); past the list the colours repeat.
+pub fn revision_colour(level: u8) -> &'static str {
+    if level == 0 {
+        return "White";
+    }
+    REVISION_COLOURS.get(usize::from(level - 1) % REVISION_COLOURS.len()).copied().unwrap_or("Blue")
+}
+
+/// Revision tracking for the whole script.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Revisions {
+    /// The current revision level; 0 before the first revision.
+    pub level: u8,
+    /// While on, every change marks the changed element with `level`.
+    pub tracking: bool,
+}
+
 /// A whole script.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Screenplay {
     pub title_page: TitlePage,
     pub elements: Vec<Element>,
+    #[serde(default)]
+    pub revisions: Revisions,
 }
 
 impl Screenplay {
@@ -269,6 +295,12 @@ impl Screenplay {
     /// Indices of the scene headings, in order.
     pub fn scene_heading_indices(&self) -> impl Iterator<Item = usize> + '_ {
         self.elements.iter().enumerate().filter(|(_, e)| e.kind == ElementKind::SceneHeading).map(|(i, _)| i)
+    }
+
+    /// The element range of each scene: heading index up to (not including) the next heading.
+    pub fn scene_ranges(&self) -> Vec<std::ops::Range<usize>> {
+        let headings: Vec<usize> = self.scene_heading_indices().collect();
+        headings.iter().enumerate().map(|(n, &h)| h..headings.get(n + 1).copied().unwrap_or(self.elements.len())).collect()
     }
 
     /// The index of the scene heading that element `index` belongs to, if it is inside a scene.
@@ -309,6 +341,7 @@ mod tests {
                 Element::new(ElementKind::SceneHeading, "INT. A - DAY"),
                 Element::new(ElementKind::Action, "x"),
             ],
+            ..Screenplay::default()
         };
         assert_eq!(sp.scene_of(0), None);
         assert_eq!(sp.scene_of(2), Some(1));

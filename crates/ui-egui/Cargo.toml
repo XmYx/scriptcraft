@@ -27,3 +27,4 @@ rfd = { workspace = true }
 
 [dev-dependencies]
 egui_kittest = { workspace = true }
+scriptcraft-engine = { workspace = true }

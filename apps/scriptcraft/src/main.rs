@@ -23,6 +23,10 @@ Usage: scriptcraft [options] [script.fountain | script.fdx]
 Options:
   --sample              open the bundled sample script
   --preview             start in page preview
+  --cards               start in the index cards
+  --revision <i,j,...>  start a revision and mark these elements (screenshots)
+  --find <text>         open the find bar on this text (screenshots)
+  --dark-page           start with the dark page
   --paper <us-letter|a4>
   --focus <element>     put the caret in this element (0-based)
   --screenshot <file>   render the window to a PNG file and quit
@@ -33,12 +37,13 @@ Options:
 
 struct Cli {
     startup: Startup,
+    dark_page: bool,
     screenshot: Option<PathBuf>,
     size: [f32; 2],
 }
 
 fn parse_args(args: impl Iterator<Item = String>) -> Result<Option<Cli>, String> {
-    let mut cli = Cli { startup: Startup::default(), screenshot: None, size: [1440.0, 900.0] };
+    let mut cli = Cli { startup: Startup::default(), dark_page: false, screenshot: None, size: [1440.0, 900.0] };
     let mut args = args.peekable();
     while let Some(arg) = args.next() {
         let mut value = |name: &str| args.next().ok_or_else(|| format!("{name} needs a value"));
@@ -53,6 +58,16 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Option<Cli>, String>
             }
             "--sample" => cli.startup.sample = true,
             "--preview" => cli.startup.preview = true,
+            "--cards" => cli.startup.cards = true,
+            "--dark-page" => cli.dark_page = true,
+            "--find" => cli.startup.find = Some(value("--find")?),
+            "--revision" => {
+                let v = value("--revision")?;
+                cli.startup.demo_revision = v
+                    .split(',')
+                    .map(|n| n.trim().parse::<usize>().map_err(|_| format!("--revision needs element numbers, not {v:?}")))
+                    .collect::<Result<_, _>>()?;
+            }
             "--paper" => {
                 let v = value("--paper")?;
                 cli.startup.paper = Paper::from_id(&v).ok_or_else(|| format!("unknown paper size {v:?} (us-letter or a4)"))?;

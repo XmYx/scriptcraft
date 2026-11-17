@@ -21,7 +21,7 @@ pub fn parse(text: &str) -> Screenplay {
     let lines: Vec<&str> = normalized.split('\n').collect();
     let (title_page, start) = read_title_page(&lines);
     let elements = read_body(lines.get(start..).unwrap_or_default());
-    Screenplay { title_page, elements }
+    Screenplay { title_page, elements, ..Screenplay::default() }
 }
 
 /// Title page keys that mark the first paragraph as a title page. Other keys are kept once a

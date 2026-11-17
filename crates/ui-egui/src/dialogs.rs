@@ -38,6 +38,34 @@ pub fn unsaved_changes(ctx: &Context, name: &str) -> Option<Unsaved> {
     answer
 }
 
+/// Offer an autosave newer than the file. `Some(true)` recovers, `Some(false)` declines it,
+/// `None` while unanswered.
+pub fn recover(ctx: &Context, name: &str) -> Option<bool> {
+    let mut answer = None;
+    let modal = egui::Modal::new(egui::Id::unique("recover-autosave")).show(ctx, |ui| {
+        ui.set_width(420.0);
+        ui.heading(tr("Recover unsaved changes?"));
+        ui.label(trf("ScriptCraft kept changes to “{name}” that were not saved when it last closed.", &[("name", name)]));
+        ui.add_space(8.0);
+        ui.horizontal(|ui| {
+            let recover = ui.button(tr("Recover"));
+            if ui.memory(|m| m.focused().is_none()) {
+                recover.request_focus();
+            }
+            if recover.clicked() {
+                answer = Some(true);
+            }
+            if ui.button(tr("Don't Recover")).clicked() {
+                answer = Some(false);
+            }
+        });
+    });
+    if modal.should_close() && answer.is_none() {
+        answer = Some(false);
+    }
+    answer
+}
+
 /// The title page editor.
 pub struct TitlePageDialog {
     fields: Vec<(String, String)>,
@@ -96,7 +124,7 @@ impl TitlePageDialog {
     }
 }
 
-const KEYS: [(&str, &str); 14] = [
+const KEYS: [(&str, &str); 21] = [
     ("Enter", "End the element and start the next one (character → dialogue, dialogue → action…)"),
     ("Shift+Enter", "New line inside the element"),
     ("Tab", "Change the element: action → character → transition → scene heading → shot; dialogue ⇄ parenthetical"),
@@ -109,6 +137,13 @@ const KEYS: [(&str, &str); 14] = [
     ("Ctrl+S / Ctrl+Shift+S", "Save / save as Fountain"),
     ("Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"),
     ("Ctrl+Shift+P", "Page preview"),
+    ("Ctrl+Shift+I", "Index cards (arrows move, Enter opens, Alt+arrows move the scene)"),
+    ("Ctrl+F / Ctrl+H", "Find / find and replace"),
+    ("F3 / Shift+F3", "Next / previous match"),
+    ("Ctrl+P", "Export PDF"),
+    ("Alt+↑ / Alt+↓", "Move the scene earlier / later"),
+    ("F11", "Focus mode (Esc leaves it)"),
+    ("F7", "Next misspelled word, with suggestions"),
     ("Ctrl+= / Ctrl+-", "Zoom in / out"),
     ("macOS", "Cmd in place of Ctrl"),
 ];

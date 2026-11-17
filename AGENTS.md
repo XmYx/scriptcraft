@@ -137,9 +137,9 @@ layout. Every action is a `scriptcraft_engine::Command` with a stable id.
 ## 4. Shared libraries
 
 Reuse `storytold/craft-libs` before writing format or UI code (house rule 16). In use: `craft-xml`
-(FDX), `craft-fonts-build` (the craft-fonts manifest), `craft-i18n` (translations). Planned:
-`craft-pdf` for PDF export; `craft-ui`, `craft-menu`, `craft-keymap` and `craft-settings` for the
-shell. Pin every craft-libs crate to the same `rev`. API gaps are written down, not worked around
+(FDX), `craft-fonts-build` (the craft-fonts manifest), `craft-i18n` (translations), `craft-pdf`
+(PDF export and, in xtask, rasterizing PDFs), `craft-proof` (spelling). Planned: `craft-ui`,
+`craft-menu`, `craft-keymap` and `craft-settings` for the shell. Pin every craft-libs crate to the same `rev`. API gaps are written down, not worked around
 by copying: [docs/fonts.md](docs/fonts.md) (Latin manifest).
 
 ## 5. Fonts, translations and assets
@@ -177,6 +177,8 @@ cargo build                     # everything
 cargo test                      # all tests, including kittest UI tests (no display needed)
 cargo xtask ci                  # fmt --check, clippy -D warnings, tests, layers, assets,
                                 # licences, source strings, progress fragments
+cargo xtask parity              # score docs/parity-checklist.md, list open gaps by rank
+cargo xtask pdf-png <pdf> <page> <png>   # look at PDF export output
 cargo run -p scriptcraft -- --sample
 CRAFT_FONTS_DIR=$PWD/../craft-fonts CRAFT_I18N_DIR=$PWD/../craft-i18n cargo run -p scriptcraft -- --sample
 cargo run -p scriptcraft-cli -- scenes assets/samples/the-lantern-keeper.fountain

@@ -7,10 +7,17 @@
 //! - [`Command`]: every menu action by id, for the UI, the command-line tool and agents.
 //! - [`io`]: opening Fountain and FDX, saving Fountain atomically, exporting.
 
+pub mod autosave;
 pub mod command;
 pub mod complete;
 mod document;
+pub mod find;
 pub mod io;
+pub mod numbering;
+pub mod reports;
+pub mod revisions;
+pub mod scenes;
+pub mod spelling;
 pub mod typing;
 
 pub use command::Command;
