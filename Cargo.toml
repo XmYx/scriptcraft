@@ -1,0 +1,83 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "apps/*", "xtask"]
+default-members = ["crates/*", "apps/*", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.95"
+repository = "https://github.com/storytold/scriptcraft"
+
+[workspace.dependencies]
+# internal
+scriptcraft-model = { path = "crates/model" }
+scriptcraft-fountain = { path = "crates/fountain" }
+scriptcraft-fdx = { path = "crates/fdx" }
+scriptcraft-layout = { path = "crates/layout" }
+scriptcraft-interchange = { path = "crates/interchange" }
+scriptcraft-engine = { path = "crates/engine" }
+scriptcraft-fonts = { path = "crates/fonts" }
+scriptcraft-ui-egui = { path = "crates/ui-egui" }
+
+# craft-libs (storytold/craft-libs main at 0649a07aa1, 2026-11-17). Same rev for every crate.
+# craft-xml: bounded XML for hostile input (FDX import). craft-fonts-build: the craft-fonts
+# manifest parser and the EmbeddedFace type (crates/fonts/build.rs).
+craft-xml = { git = "https://github.com/storytold/craft-libs", rev = "0649a07aa11834fa5bd7052c8b97a861db532a22", version = "=0.1.0" }
+# craft-i18n: translation lookup over the optional CRAFT_I18N_DIR catalogs (crates/ui-egui/build.rs).
+craft-i18n = { git = "https://github.com/storytold/craft-libs", rev = "0649a07aa11834fa5bd7052c8b97a861db532a22", version = "=0.1.0" }
+craft-fonts-build = { git = "https://github.com/storytold/craft-libs", rev = "0649a07aa11834fa5bd7052c8b97a861db532a22", version = "=0.1.0" }
+
+# foundation
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+
+# ui
+egui = "0.37"
+eframe = { version = "0.37", default-features = false }
+# File dialogs through the XDG desktop portal on Linux (pure Rust over D-Bus). The default
+# `wayland` feature links the system libwayland through pkg-config only to parent the dialog to
+# the window; without it builds need no Wayland development files.
+egui_kittest = "0.37"
+rfd = { version = "0.17", default-features = false, features = ["xdg-portal"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+too_many_arguments = "deny"
+type_complexity = "allow"
+
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+
+[profile.dev]
+opt-level = 1
+debug = "line-tables-only"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 16
+debug = 0
+
+# The Craft apps build against the suite's egui and winit forks (same revisions as craft-libs).
+[patch.crates-io]
+ecolor = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+emath = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint_default_fonts = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-winit = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-wgpu = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_glow = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_kittest = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+eframe = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+winit = { git = "https://github.com/storytold/winit.git", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }

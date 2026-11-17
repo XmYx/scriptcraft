@@ -1,0 +1,53 @@
+# Draft craft-launcher catalog entry (storytold/craft-launcher, crates/core/catalog.toml).
+# Not submitted. The icon URL, sha256, ink colours, screenshots and signing team are filled in by
+# the maintainers when the app is adopted and released.
+
+[[apps]]
+color = [32, 128, 128]
+former_bundles = []
+former_ids = []
+former_names = []
+id = "scriptcraft"
+binary = "scriptcraft"
+flatpak_id = "ai.storyteller.scriptcraft"
+mac_bundle_id = "ai.storyteller.scriptcraft"
+mac_bundle_name = "ScriptCraft"
+website = "https://getartcraft.com/apps/scriptcraft"
+windows_msi_publisher = "Learning Machines LLC"
+deb_package = "scriptcraft"
+rpm_package = "scriptcraft"
+desktop_categories = ["Office", "WordProcessor"]
+startup_wm_class = "ai.storyteller.scriptcraft"
+icon_url = "TODO: https://getartcraft.com/launcher-app-icons/scriptcraft-<sha256>.png"
+icon_sha256 = "TODO"
+ink_dark = [120, 210, 205]
+ink_light = [20, 110, 110]
+kind = "official"
+mac_team = "TODO"
+name = "ScriptCraft"
+publisher = "ArtCraft"
+repo = "storytold/scriptcraft"
+tagline = "Screenwriting"
+[apps.details]
+headline = "Write screenplays that are formatted as you type."
+about = "A screenwriting app with standard script formatting, pagination and a keyboard flow built for writing. Open source, and built from public format descriptions."
+platforms = "macOS, Windows, Linux"
+[[apps.details.features]]
+text = "Enter and Tab move between scene headings, action, characters and dialogue, with character names and locations completed as you type."
+title = "Formatted as you type"
+[[apps.details.features]]
+text = "Opens and saves Fountain, and opens FDX files."
+title = "Your files"
+[[apps.details.features]]
+text = "Pages break the way scripts expect, with (MORE) and (CONT'D), on US Letter or A4."
+title = "Real pages"
+[[apps.details.features]]
+text = "Hands scenes to BoardCraft for storyboarding, the next step on the way to FilmCraft."
+title = "Script to screen"
+[[apps.details.features]]
+text = "Every action is a command, driven from the menus, shortcuts or a command-line tool."
+title = "Built for agents"
+[[apps.details.shots]]
+caption = "Writing with the scene navigator"
+key = "hero"
+url = "TODO: https://raw.githubusercontent.com/storytold/craft-launcher-assets/v1/scriptcraft/hero.jpg"

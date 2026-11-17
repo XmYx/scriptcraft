@@ -1,0 +1,59 @@
+# .deb and .rpm packages (nfpm: https://nfpm.goreleaser.com). Run by package.sh, which stages
+# the file tree, substitutes its path for ${STAGE} and exports VERSION and NFPM_ARCH.
+#
+#   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
+name: scriptcraft
+arch: ${NFPM_ARCH}
+platform: linux
+version: ${VERSION}
+version_schema: semver
+release: 1
+section: editors
+priority: optional
+maintainer: ${SCRIPTCRAFT_MAINTAINER}
+vendor: Learning Machines LLC
+homepage: https://getartcraft.com/apps/scriptcraft
+license: MIT OR Apache-2.0
+description: |-
+  Open-source, native screenwriting app. Standard screenplay formatting and
+  pagination on US Letter or A4, Enter and Tab element flow, auto-complete,
+  scene navigator and page preview; opens and saves Fountain and opens FDX
+  files; hands scenes to BoardCraft for storyboarding.
+  Includes scriptcraft-cli for scene lists, conversion and paginated text.
+
+overrides:
+  deb:
+    depends:
+      - libc6 (>= 2.35)
+      - libgcc-s1
+      - libxkbcommon0
+      - libvulkan1 | libegl1
+    recommends:
+      - libwayland-client0
+      - libx11-6
+      - libxcursor1
+      - libxi6
+      - libxrandr2
+      - xdg-desktop-portal
+  rpm:
+    depends:
+      - libxkbcommon
+      - (vulkan-loader or libglvnd-egl)
+    recommends:
+      - libwayland-client
+      - libX11
+      - libXcursor
+      - libXi
+      - libXrandr
+      - xdg-desktop-portal
+
+contents:
+  - src: ${STAGE}/usr/bin/scriptcraft
+    dst: /usr/bin/scriptcraft
+    file_info: { mode: 0755 }
+  - src: ${STAGE}/usr/bin/scriptcraft-cli
+    dst: /usr/bin/scriptcraft-cli
+    file_info: { mode: 0755 }
+  - src: ${STAGE}/usr/share/
+    dst: /usr/share/
+    type: tree

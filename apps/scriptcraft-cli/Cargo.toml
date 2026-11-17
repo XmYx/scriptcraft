@@ -1,0 +1,18 @@
+[package]
+name = "scriptcraft-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "ScriptCraft command-line tool: scene lists, conversion, paginated text and statistics."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+scriptcraft-model = { workspace = true }
+scriptcraft-fountain = { workspace = true }
+scriptcraft-layout = { workspace = true }
+scriptcraft-engine = { workspace = true }
+scriptcraft-interchange = { workspace = true }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="5">
+  <Content>
+    <Paragraph Type="Scene Heading" Number="1">
+      <SceneProperties Length="4/8" Page="1" Title="">
+        <Summary><Paragraph><Text>Not part of the heading.</Text></Paragraph></Summary>
+      </SceneProperties>
+      <Text>INT. LIGHTHOUSE - LAMP ROOM - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The lamp turns. Maya trims the wick with </Text><Text Style="Italic">brass</Text><Text> scissors.</Text>
+    </Paragraph>
+    <Paragraph Type="Character"><Text>MAYA</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(to the radio)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>North Point here. Go ahead.</Text></Paragraph>
+    <Paragraph>
+      <DualDialogue>
+        <Paragraph Type="Character"><Text>ARI</Text></Paragraph>
+        <Paragraph Type="Dialogue"><Text>There!</Text></Paragraph>
+        <Paragraph Type="Character"><Text>TOMAS</Text></Paragraph>
+        <Paragraph Type="Dialogue"><Text>Told you.</Text></Paragraph>
+      </DualDialogue>
+    </Paragraph>
+    <Paragraph Type="Shot"><Text>CLOSE ON THE CHART TABLE</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>CUT TO:</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>EXT. JETTY - DAWN</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Rain &amp; wind. Then quiet.</Text></Paragraph>
+  </Content>
+  <TitlePage>
+    <Content>
+      <Paragraph Alignment="Center"><Text>THE LANTERN KEEPER</Text></Paragraph>
+      <Paragraph Alignment="Center"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>Written by</Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>The ScriptCraft contributors</Text></Paragraph>
+      <Paragraph Alignment="Left"><Text>A test fixture</Text></Paragraph>
+      <Paragraph Alignment="Right"><Text>Draft 2</Text></Paragraph>
+    </Content>
+  </TitlePage>
+</FinalDraft>

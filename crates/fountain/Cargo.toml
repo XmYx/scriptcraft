@@ -1,0 +1,15 @@
+[package]
+name = "scriptcraft-fountain"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Fountain plain-text screenplay reader and writer for ScriptCraft. No UI."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+scriptcraft-model = { workspace = true }
+thiserror = { workspace = true }

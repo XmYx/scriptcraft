@@ -1,0 +1,8 @@
+*~
+plan/
+/target
+/target-*/
+/dist
+.DS_Store
+/.claude/
+/craft-fonts/

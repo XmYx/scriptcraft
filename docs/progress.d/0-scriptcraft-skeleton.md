@@ -1,0 +1,1 @@
+- 2026-11-17 · major · ScriptCraft skeleton: screenplay model; Fountain reader and writer with a lossless round trip; FDX import through craft-xml; US Letter and A4 pagination with (MORE)/(CONT'D); egui editor with Enter/Tab element flow, auto-complete, scene navigator and page preview; scene list for BoardCraft; command-line tool.

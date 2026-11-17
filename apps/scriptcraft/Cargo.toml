@@ -1,0 +1,21 @@
+[package]
+name = "scriptcraft"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "ScriptCraft desktop app"
+publish = false
+default-run = "scriptcraft"
+
+[lints]
+workspace = true
+
+[dependencies]
+scriptcraft-ui-egui = { workspace = true }
+scriptcraft-layout = { workspace = true }
+egui = { workspace = true }
+# `clipboard` is the OS clipboard (copy and paste with other apps); without it egui keeps one inside the app.
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "clipboard", "wayland", "x11"] }
+image = { workspace = true }
+log = { workspace = true }

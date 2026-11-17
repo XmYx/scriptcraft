@@ -1,0 +1,1 @@
+- First preview of ScriptCraft: write screenplays with standard formatting and pagination (US Letter and A4), open and save Fountain, open FDX files, and send scenes to BoardCraft.

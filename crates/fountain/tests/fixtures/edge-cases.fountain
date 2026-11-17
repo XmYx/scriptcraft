@@ -1,0 +1,50 @@
+Title:
+    Edge Cases
+    For the Fountain Reader
+Author: ScriptCraft tests
+
+.FLASHBACK
+
+!INT. THIS IS ACTION, NOT A HEADING
+
+@McCAFFREY
+Lowercase letters in my name.
+
+INT./EXT. CAR - MOVING #7#
+
+I/E VAN - DAY
+
+EXT. FIELD - DAY #12A#
+
+    Indented action keeps its indentation.
+	So does a tab.
+
+ROSA (O.S.)
+First line.
+  
+Third line after a two-space line.
+
+>SMASH CUT TO BLACK.
+
+> CENTERED TEXT <
+
+~Row, row, row the boat
+~Gently down the stream
+
+===
+
+## Second level section
+
+=Synopsis without a space.
+
+[[A note with a
+line break]]
+
+BANG!
+The door gives way.
+
+...and then nothing.
+
+POV - THROUGH THE KEYHOLE
+
+MATCH CUT TO:

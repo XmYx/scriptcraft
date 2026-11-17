@@ -1,0 +1,19 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "ScriptCraft repository checks: cargo xtask ci | layers | assets | licenses | strings | progress"
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json = { workspace = true }
+scriptcraft-model = { workspace = true }
+scriptcraft-layout = { workspace = true }
+scriptcraft-engine = { workspace = true }
+# `cargo xtask icons` renders assets/app-icon/scriptcraft.svg to the hicolor PNGs (pure Rust, MIT OR Apache-2.0).
+resvg = { version = "0.45", default-features = false }

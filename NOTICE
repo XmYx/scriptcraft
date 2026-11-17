@@ -1,0 +1,29 @@
+ScriptCraft
+Copyright (c) 2026 ArtCraft Team and the ScriptCraft contributors.
+Licensed under the MIT License or the Apache License, Version 2.0, at your option
+(LICENSE-MIT, LICENSE-APACHE).
+
+ScriptCraft is an independent, clean-room project. It is not affiliated with, endorsed by or
+sponsored by the maker of any other screenwriting application. File format names (FDX,
+Fountain) are used only to say which files ScriptCraft opens and saves.
+
+Third-party material
+
+This product bundles third-party material under its own licenses, listed below. The per-file
+list (author, source, license) is in ATTRIBUTION.md.
+
+- Ubuntu Light (via the epaint_default_fonts crate) — Ubuntu Font Licence 1.0.
+- Hack, Noto Emoji and the egui emoji icon font (via epaint_default_fonts) — MIT, Bitstream Vera,
+  OFL-1.1.
+- Builds made with craft-fonts (CRAFT_FONTS_DIR) embed Liberation Mono (Regular, Bold, Italic,
+  Bold Italic) under the SIL Open Font License 1.1; its licence text ships with release packages
+  and is retained in craft-fonts (fonts/liberation-mono/OFL.txt).
+
+Code dependencies
+
+- craft-xml, craft-fonts-build and craft-i18n come from storytold/craft-libs (same owner,
+  MIT OR Apache-2.0). Builds made with craft-i18n (CRAFT_I18N_DIR) embed its translation
+  catalogs (same owner).
+- Three dependencies offer a choice of licences; ScriptCraft uses them under the permissive one:
+  r-efi (MIT OR Apache-2.0 OR LGPL-2.1-or-later: MIT), self_cell (Apache-2.0 OR GPL-2.0-only:
+  Apache-2.0). `cargo xtask licenses` lists them.

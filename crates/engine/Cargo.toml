@@ -1,0 +1,20 @@
+[package]
+name = "scriptcraft-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "ScriptCraft editing engine: the open document, undo, element rules for Enter and Tab, auto-complete, commands and file I/O. No UI."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+scriptcraft-model = { workspace = true }
+scriptcraft-fountain = { workspace = true }
+scriptcraft-fdx = { workspace = true }
+scriptcraft-layout = { workspace = true }
+scriptcraft-interchange = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }

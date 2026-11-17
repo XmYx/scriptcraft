@@ -1,0 +1,18 @@
+[package]
+name = "scriptcraft-fonts"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "The screenplay typeface (Liberation Mono, OFL-1.1) embedded from an optional craft-fonts checkout. No UI."
+publish = false
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-fonts-build = { workspace = true }
+
+[build-dependencies]
+craft-fonts-build = { workspace = true }

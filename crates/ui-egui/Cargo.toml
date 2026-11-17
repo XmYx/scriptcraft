@@ -1,0 +1,29 @@
+[package]
+name = "scriptcraft-ui-egui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "ScriptCraft's egui interface: the script editor, scene navigator, page preview and dialogs."
+publish = false
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+scriptcraft-model = { workspace = true }
+scriptcraft-layout = { workspace = true }
+scriptcraft-engine = { workspace = true }
+scriptcraft-fountain = { workspace = true }
+scriptcraft-interchange = { workspace = true }
+scriptcraft-fonts = { workspace = true }
+egui = { workspace = true, features = ["default_fonts"] }
+craft-i18n = { workspace = true }
+log = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rfd = { workspace = true }
+
+[dev-dependencies]
+egui_kittest = { workspace = true }

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=ScriptCraft
+GenericName=Screenwriting
+Comment=Write and format screenplays
+Exec=scriptcraft %F
+Icon=ai.storyteller.scriptcraft
+Terminal=false
+Categories=Office;WordProcessor;
+MimeType=text/x-fountain;
+StartupWMClass=ai.storyteller.scriptcraft
+Keywords=screenplay;script;screenwriting;fountain;
